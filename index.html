@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>연구실 화학물질 검색</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="logo">IMC Lab <span>Chemical Finder</span></div>
+      <div id="auth-area" class="auth-area">
+        <span id="db-status" class="db-status"><span class="dot"></span><span class="db-status-text">연결 확인 중...</span></span>
+        <div id="auth-guest" class="auth-guest">
+          <button id="open-login-btn" class="btn-ghost">로그인</button>
+          <button id="open-signup-btn" class="btn-primary">회원가입</button>
+        </div>
+        <div id="auth-user" class="auth-user" hidden>
+          <span id="user-name" class="user-name"></span>
+          <button id="logout-btn" class="btn-ghost">로그아웃</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="search-section">
+      <h1>화학물질 재고 검색</h1>
+      <p class="subtitle">물질명 또는 CAS 번호로 검색하세요</p>
+
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="예: Nitromethane 또는 75-52-5" autocomplete="off">
+        <button id="search-btn" class="btn-primary">검색</button>
+      </div>
+
+      <div class="shelf-tabs" id="shelf-tabs">
+        <button class="shelf-tab active" data-category="">전체</button>
+        <button class="shelf-tab" data-category="organics1">Organics 1</button>
+        <button class="shelf-tab" data-category="organics2">Organics 2</button>
+        <button class="shelf-tab" data-category="organics3">Organics 3</button>
+        <button class="shelf-tab" data-category="inorganics">Inorganics</button>
+        <button class="shelf-tab" data-category="inorganics_bulk">Inorganics (bulk)</button>
+        <button class="shelf-tab" data-category="acids">Acids</button>
+        <button class="shelf-tab" data-category="bases">Bases</button>
+        <button class="shelf-tab" data-category="deuteriums">Deuteriums</button>
+      </div>
+
+      <div class="search-actions">
+        <button id="open-add-btn" class="btn-secondary" disabled title="로그인이 필요합니다">+ 새 물질 등록</button>
+        <span id="result-count" class="result-count"></span>
+      </div>
+    </section>
+
+    <section class="results-section">
+      <ul id="results-list" class="results-list">
+        <li class="results-empty">검색어를 입력해 물질을 찾아보세요.</li>
+      </ul>
+    </section>
+  </main>
+
+  <!-- 물질 상세 카드 템플릿 -->
+  <template id="chemical-card-template">
+    <li class="chem-card">
+      <div class="chem-card-header" role="button" tabindex="0">
+        <span class="chem-chevron">▸</span>
+        <span class="chem-name"></span>
+        <span class="chem-status-badge"></span>
+        <span class="chem-position-inline"></span>
+        <span class="chem-company-inline"></span>
+      </div>
+
+      <div class="chem-details">
+        <div class="chem-details-inner">
+          <div class="chem-meta">
+            <span class="chem-cas"></span>
+            <span class="chem-category-tag"></span>
+          </div>
+
+          <div class="chem-summary">
+            <div><span class="label">회사</span><span class="chem-company"></span></div>
+            <div><span class="label">규격</span><span class="chem-size"></span></div>
+            <div><span class="label">보관위치</span><span class="chem-position"></span></div>
+            <div><span class="label">보유수량</span><span class="chem-quantity"></span></div>
+          </div>
+
+          <div class="chem-tabs">
+            <button class="tab-btn active" data-tab="info">기본정보</button>
+            <button class="tab-btn" data-tab="msds">MSDS</button>
+            <button class="tab-btn" data-tab="hazard">위험도</button>
+            <button class="tab-btn" data-tab="quenching">Quenching</button>
+            <button class="tab-btn" data-tab="disposal">처리방법</button>
+            <button class="tab-btn" data-tab="storage">보관방법</button>
+          </div>
+
+          <div class="chem-tab-panels">
+            <div class="tab-panel active" data-panel="info">
+              <div class="info-grid">
+                <div><span class="label">순도/농도</span><span class="chem-purity"></span></div>
+                <div><span class="label">용기</span><span class="chem-container"></span></div>
+                <div><span class="label">상태</span><span class="chem-phase"></span></div>
+                <div><span class="label">카탈로그 번호</span><span class="chem-catalogue"></span></div>
+              </div>
+            </div>
+            <div class="tab-panel" data-panel="msds" data-field="msds_url"></div>
+            <div class="tab-panel" data-panel="hazard" data-field="hazard_class"></div>
+            <div class="tab-panel" data-panel="quenching" data-field="quenching_method"></div>
+            <div class="tab-panel" data-panel="disposal" data-field="disposal_method"></div>
+            <div class="tab-panel" data-panel="storage" data-field="storage_method"></div>
+          </div>
+
+          <div class="chem-actions">
+            <button class="checkout-btn btn-secondary">사용 시작</button>
+            <button class="return-btn btn-secondary" hidden>반납하기</button>
+            <button class="dispose-btn btn-ghost-danger">폐기 처리</button>
+            <span class="holder-note"></span>
+          </div>
+        </div>
+      </div>
+    </li>
+  </template>
+
+  <!-- 로그인 모달 -->
+  <div id="login-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <h2>로그인</h2>
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="이메일" required>
+        <input type="password" id="login-password" placeholder="비밀번호" required>
+        <label class="checkbox-label">
+          <input type="checkbox" id="login-remember">
+          이메일 기억하기
+        </label>
+        <p class="form-error" id="login-error"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost modal-close">취소</button>
+          <button type="submit" class="btn-primary">로그인</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 회원가입 모달 -->
+  <div id="signup-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <h2>회원가입</h2>
+      <form id="signup-form">
+        <input type="text" id="signup-name" placeholder="이름" required>
+        <input type="email" id="signup-email" placeholder="이메일" required>
+        <input type="password" id="signup-password" placeholder="비밀번호 (6자 이상)" required minlength="6">
+        <p class="form-error" id="signup-error"></p>
+        <p class="form-note" id="signup-note" hidden>가입 확인 메일을 보냈어요. 메일함을 확인해주세요.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost modal-close">취소</button>
+          <button type="submit" class="btn-primary">가입하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 반납 모달 -->
+  <div id="return-modal" class="modal-overlay" hidden>
+    <div class="modal">
+      <h2>반납하기</h2>
+      <form id="return-form">
+        <input type="hidden" id="return-chemical-id">
+        <label class="field-label" for="return-amount">얼마나 사용했나요?</label>
+        <input type="text" id="return-amount" placeholder="예: 약 20ml 사용" required>
+        <p class="form-error" id="return-error"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost modal-close">취소</button>
+          <button type="submit" class="btn-primary">반납 완료</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 새 물질 등록 모달 -->
+  <div id="add-modal" class="modal-overlay" hidden>
+    <div class="modal modal-wide">
+      <h2>새 물질 등록 (구매)</h2>
+
+      <div class="paste-box">
+        <label class="field-label" for="add-paste">
+          구매 스프레드시트에서 붙여넣기 — Company / CAS No. / Catalogue No. / compound name / purity·conc. / quantity(ea) / size / form 순서 8칸을 드래그해서 복사한 후 붙여넣으세요. 여러 줄이면 한번에 여러 개 등록됩니다.
+        </label>
+        <textarea id="add-paste" rows="3" placeholder="여기에 붙여넣기 (Ctrl+V)"></textarea>
+        <p class="form-note" id="paste-preview"></p>
+      </div>
+
+      <form id="add-form">
+        <p class="field-label">보관 장소 선택 *</p>
+        <div class="shelf-tabs" id="add-category-tabs">
+          <button type="button" class="shelf-tab" data-category="organics1">Organics 1</button>
+          <button type="button" class="shelf-tab" data-category="organics2">Organics 2</button>
+          <button type="button" class="shelf-tab" data-category="organics3">Organics 3</button>
+          <button type="button" class="shelf-tab" data-category="inorganics">Inorganics</button>
+          <button type="button" class="shelf-tab" data-category="inorganics_bulk">Inorganics (bulk)</button>
+          <button type="button" class="shelf-tab" data-category="acids">Acids</button>
+          <button type="button" class="shelf-tab" data-category="bases">Bases</button>
+          <button type="button" class="shelf-tab" data-category="deuteriums">Deuteriums</button>
+        </div>
+
+        <p class="field-label" id="manual-fields-label" style="margin-top:0.9rem;">직접 입력 (붙여넣기 안 쓸 때)</p>
+        <div class="form-grid">
+          <input type="text" id="add-name" placeholder="물질명 *">
+          <input type="text" id="add-cas" placeholder="CAS 번호">
+          <input type="text" id="add-company" placeholder="회사">
+          <input type="text" id="add-catalogue" placeholder="카탈로그 번호">
+          <input type="text" id="add-purity" placeholder="순도/농도">
+          <input type="text" id="add-size" placeholder="규격 (예: 500ml)">
+          <input type="text" id="add-container" placeholder="용기 (예: Amber bottle)">
+          <input type="text" id="add-phase" placeholder="상태 (예: liquid)">
+          <input type="number" id="add-quantity" placeholder="수량" value="1" min="1" step="1">
+        </div>
+        <p class="form-error" id="add-error"></p>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost modal-close">취소</button>
+          <button type="submit" class="btn-primary">등록하기</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script src="auth.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
