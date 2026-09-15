@@ -127,6 +127,15 @@ function renderResults() {
   }
 }
 
+function formatDateTime(isoString) {
+  return new Date(isoString).toLocaleString("ko-KR", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
 function buildCard(chem) {
   const node = template.content.cloneNode(true);
   const li = node.querySelector(".chem-card");
@@ -173,12 +182,18 @@ function buildCard(chem) {
 
   if (chem.status === "in_use") {
     checkoutBtn.hidden = true;
-    if (currentUser && chem.current_holder_id === currentUser.id) {
-      returnBtn.hidden = false;
-    } else {
-      const holderName = profileNameById.get(chem.current_holder_id) || "다른 연구자";
-      holderNote.textContent = `${holderName}님이 사용중`;
-    }
+
+    const isMine = currentUser && chem.current_holder_id === currentUser.id;
+    if (isMine) returnBtn.hidden = false;
+
+    const holderName = isMine ? "나" : (profileNameById.get(chem.current_holder_id) || "다른 연구자");
+    const since = chem.checked_out_at ? formatDateTime(chem.checked_out_at) : "";
+
+    holderNote.textContent = since ? `${holderName} 사용중 (${since}부터)` : `${holderName} 사용중`;
+
+    const holderInline = li.querySelector(".chem-holder-inline");
+    holderInline.textContent = since ? `${holderName} · ${since}~` : holderName;
+    holderInline.hidden = false;
   }
 
   return node;

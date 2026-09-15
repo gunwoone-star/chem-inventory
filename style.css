@@ -315,6 +315,16 @@ input, select {
   color: #fbbf24;
 }
 
+.chem-holder-inline {
+  font-size: 0.78rem;
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+.chem-holder-inline[hidden] {
+  display: none;
+}
+
 .chem-position-inline, .chem-company-inline {
   font-size: 0.8rem;
   color: var(--text-dim);
