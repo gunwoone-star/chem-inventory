@@ -76,15 +76,28 @@
         <ul id="results-list" class="results-list">
           <li class="results-empty">검색어를 입력해 물질을 찾아보세요.</li>
         </ul>
+        <nav id="pagination" class="pagination" hidden></nav>
       </section>
     </section>
 
     <section id="view-log" class="view" hidden>
       <h1>화학물질 사용기록</h1>
       <p class="subtitle">누가 언제 어떤 물질을 사용했는지 확인하세요</p>
+
+      <div class="search-mode-tabs" id="log-search-mode-tabs">
+        <button class="search-mode-tab active" data-mode="name">물질명</button>
+        <button class="search-mode-tab" data-mode="cas">CAS / 제품번호</button>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="log-search-input" placeholder="예: Nitromethane" autocomplete="off">
+        <button id="log-search-btn" class="btn-primary">검색</button>
+      </div>
+
       <ul id="log-list" class="log-list">
         <li class="results-loading">불러오는 중...</li>
       </ul>
+      <nav id="log-pagination" class="pagination" hidden></nav>
     </section>
 
     <section id="view-manual" class="view" hidden>
@@ -152,6 +165,7 @@
       <div class="chem-card-header" role="button" tabindex="0">
         <span class="chem-chevron">▸</span>
         <span class="chem-name"></span>
+        <span class="chem-purity-inline"></span>
         <span class="chem-status-badge"></span>
         <span class="chem-holder-inline" hidden></span>
         <span class="chem-position-inline"></span>

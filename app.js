@@ -32,6 +32,7 @@ const shelfTabs = document.getElementById("shelf-tabs");
 const searchBtn = document.getElementById("search-btn");
 const resultsList = document.getElementById("results-list");
 const resultCountEl = document.getElementById("result-count");
+const paginationEl = document.getElementById("pagination");
 const template = document.getElementById("chemical-card-template");
 
 let currentCategory = "";
@@ -68,19 +69,27 @@ function sanitizeForFilter(s) {
 }
 
 let searchRequestId = 0;
+const PAGE_SIZE = 100;
+let currentPage = 1;
+let totalResultCount = 0;
 
-async function performSearch() {
+async function performSearch(resetPage = true) {
+  if (resetPage) currentPage = 1;
+
   const rawQuery = searchInput.value.trim();
   const requestId = ++searchRequestId;
 
   resultsList.innerHTML = '<li class="results-loading">검색 중...</li>';
 
+  const from = (currentPage - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
   let query = supabaseClient
     .from("chemicals")
-    .select("*")
+    .select("*", { count: "exact" })
     .eq("is_disposed", false)
     .order("compound_name")
-    .limit(100);
+    .range(from, to);
 
   if (currentCategory) query = query.eq("category", currentCategory);
 
@@ -93,7 +102,7 @@ async function performSearch() {
     }
   }
 
-  const { data, error } = await query;
+  const { data, error, count } = await query;
 
   // A newer search started while this one was in flight — its result is stale, discard it.
   if (requestId !== searchRequestId) return;
@@ -105,10 +114,63 @@ async function performSearch() {
   }
 
   lastResults = data;
+  totalResultCount = count || 0;
   await loadHolderProfiles(data);
 
   if (requestId !== searchRequestId) return;
   renderResults();
+  renderPagination();
+}
+
+function renderPagination() {
+  renderPaginationInto(paginationEl, currentPage, totalResultCount, (page) => {
+    currentPage = page;
+    performSearch(false);
+    resultsList.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+function renderPaginationInto(container, page, totalCount, onPageChange) {
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  if (totalPages <= 1) {
+    container.hidden = true;
+    container.innerHTML = "";
+    return;
+  }
+
+  container.hidden = false;
+  container.innerHTML = "";
+
+  const addBtn = (label, targetPage, opts = {}) => {
+    const btn = document.createElement("button");
+    btn.textContent = label;
+    if (opts.active) btn.classList.add("active");
+    if (opts.disabled) btn.disabled = true;
+    if (!opts.disabled && !opts.active) {
+      btn.addEventListener("click", () => onPageChange(targetPage));
+    }
+    container.appendChild(btn);
+  };
+
+  const addEllipsis = () => {
+    const span = document.createElement("span");
+    span.className = "pagination-ellipsis";
+    span.textContent = "…";
+    container.appendChild(span);
+  };
+
+  addBtn("‹", page - 1, { disabled: page === 1 });
+
+  const pageNumbers = new Set([1, totalPages, page, page - 1, page + 1]);
+  let prev = null;
+  for (const p of [...pageNumbers].filter((p) => p >= 1 && p <= totalPages).sort((a, b) => a - b)) {
+    if (prev !== null && p - prev > 1) addEllipsis();
+    addBtn(String(p), p, { active: p === page });
+    prev = p;
+  }
+
+  addBtn("›", page + 1, { disabled: page === totalPages });
 }
 
 async function loadHolderProfiles(chemicals) {
@@ -130,7 +192,7 @@ function renderResults() {
 
   chemicalsById.clear();
   resultsList.innerHTML = "";
-  resultCountEl.textContent = lastResults.length ? `${lastResults.length}건` : "";
+  resultCountEl.textContent = totalResultCount ? `${totalResultCount}건` : "";
 
   if (lastResults.length === 0) {
     resultsList.innerHTML = '<li class="results-empty">검색 결과가 없습니다.</li>';
@@ -180,6 +242,7 @@ function buildCard(chem) {
   li.dataset.id = chem.id;
 
   li.querySelector(".chem-name").textContent = chem.compound_name;
+  li.querySelector(".chem-purity-inline").textContent = chem.purity_conc || "";
   li.querySelector(".chem-position-inline").textContent = chem.storage_position || "-";
   li.querySelector(".chem-company-inline").textContent = chem.company || "-";
   li.querySelector(".chem-cas").textContent = chem.cas_no ? `CAS ${chem.cas_no}` : "CAS 없음";
@@ -760,21 +823,65 @@ navMenuDropdown.addEventListener("click", (e) => {
 // ---------- Usage log view ----------
 
 const logList = document.getElementById("log-list");
+const logPaginationEl = document.getElementById("log-pagination");
+const logSearchInput = document.getElementById("log-search-input");
+const logSearchBtn = document.getElementById("log-search-btn");
+const logSearchModeTabs = document.getElementById("log-search-mode-tabs");
 
-async function loadUsageLog() {
+let logSearchMode = "name";
+let logCurrentPage = 1;
+let logTotalCount = 0;
+
+async function loadUsageLog(resetPage = true) {
+  if (resetPage) logCurrentPage = 1;
+
   logList.innerHTML = '<li class="results-loading">불러오는 중...</li>';
+  logPaginationEl.hidden = true;
 
-  const { data: logs, error } = await supabaseClient
+  const rawQuery = logSearchInput.value.trim();
+  const q = sanitizeForFilter(rawQuery);
+
+  let matchedChemIds = null;
+  if (q) {
+    let chemQuery = supabaseClient.from("chemicals").select("id");
+    chemQuery = logSearchMode === "cas"
+      ? chemQuery.or(`cas_no.ilike.%${q}%,catalogue_no.ilike.%${q}%`)
+      : chemQuery.ilike("compound_name", `%${q}%`);
+
+    const { data: matchedChems, error: matchError } = await chemQuery;
+    if (matchError) {
+      logList.innerHTML = '<li class="results-empty">검색 중 오류가 발생했습니다.</li>';
+      console.error("Failed to search chemicals for log filter:", matchError);
+      return;
+    }
+    matchedChemIds = (matchedChems || []).map((c) => c.id);
+
+    if (matchedChemIds.length === 0) {
+      logList.innerHTML = '<li class="results-empty">검색 결과가 없습니다.</li>';
+      return;
+    }
+  }
+
+  const from = (logCurrentPage - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  let logQuery = supabaseClient
     .from("usage_logs")
-    .select("*")
+    .select("*", { count: "exact" })
     .order("checked_out_at", { ascending: false })
-    .limit(100);
+    .range(from, to);
+
+  if (matchedChemIds) logQuery = logQuery.in("chemical_id", matchedChemIds);
+
+  const { data: logs, error, count } = await logQuery;
 
   if (error) {
     logList.innerHTML = '<li class="results-empty">사용기록을 불러오지 못했습니다.</li>';
     console.error("Failed to load usage log:", error);
     return;
   }
+
+  logTotalCount = count || 0;
 
   if (logs.length === 0) {
     logList.innerHTML = '<li class="results-empty">아직 사용기록이 없습니다.</li>';
@@ -847,7 +954,34 @@ async function loadUsageLog() {
     li.appendChild(detail);
     logList.appendChild(li);
   }
+
+  renderPaginationInto(logPaginationEl, logCurrentPage, logTotalCount, (page) => {
+    logCurrentPage = page;
+    loadUsageLog(false);
+    logList.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
+
+logSearchBtn.addEventListener("click", () => loadUsageLog());
+logSearchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") loadUsageLog();
+});
+
+let logSearchDebounceTimer = null;
+logSearchInput.addEventListener("input", () => {
+  clearTimeout(logSearchDebounceTimer);
+  logSearchDebounceTimer = setTimeout(() => loadUsageLog(), 300);
+});
+
+logSearchModeTabs.addEventListener("click", (e) => {
+  const tab = e.target.closest(".search-mode-tab");
+  if (!tab) return;
+  logSearchModeTabs.querySelectorAll(".search-mode-tab").forEach((t) => t.classList.remove("active"));
+  tab.classList.add("active");
+  logSearchMode = tab.dataset.mode;
+  logSearchInput.placeholder = SEARCH_MODE_PLACEHOLDERS[logSearchMode];
+  loadUsageLog();
+});
 
 async function editLogNote(logId, currentNote) {
   const newNote = prompt("사용량 메모 수정", currentNote || "");
