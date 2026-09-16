@@ -26,6 +26,7 @@
           <div id="nav-menu-dropdown" class="nav-menu-dropdown" hidden>
             <button class="nav-menu-item active" data-view="search">🔍 검색</button>
             <button class="nav-menu-item" data-view="log">📋 사용기록</button>
+            <button class="nav-menu-item" data-view="manual">📖 안전 매뉴얼</button>
           </div>
         </div>
       </div>
@@ -84,6 +85,64 @@
       <ul id="log-list" class="log-list">
         <li class="results-loading">불러오는 중...</li>
       </ul>
+    </section>
+
+    <section id="view-manual" class="view" hidden>
+      <h1>실험실 안전 매뉴얼</h1>
+      <p class="subtitle">Laboratory Safety Manual — MIT · Harvard · USC · Vanderbilt · SLAC 등 공식 자료 요약 (한/영)</p>
+
+      <nav class="manual-toc">
+        <a href="#manual-pyrophoric">1. 파이로포릭·수분민감성 시약</a>
+        <a href="#manual-corrosive">2. 강산·강염기</a>
+        <a href="#manual-peroxide">3. 과산화물 생성물질</a>
+        <a href="#manual-cyanide">4. 시안화물</a>
+        <a href="#manual-halogenated">5. 할로겐화 용매</a>
+        <a href="#manual-gas">6. 압축가스 실린더</a>
+      </nav>
+
+      <article class="manual-section" id="manual-pyrophoric">
+        <h2>1. Pyrophoric &amp; Water-Reactive Reagents / 파이로포릭·수분민감성 시약</h2>
+        <p class="manual-en">Alkali metals (Na, K) should be stored fully submerged under mineral oil in tightly sealed containers. To quench small scraps, wipe with a dry tissue, then submerge the tissue and tools in a bucket of water for at least 24 hours. To quench Grignard reagents, slowly add isopropanol dropwise with stirring, then add water dropwise until a hydroxide slurry forms and no further reaction is observed. Organolithium reagents are quenched the same way but react faster, so add isopropanol very slowly. Metal hydrides (NaH, LiAlH4, DIBAL-H) are quenched with isopropanol while monitoring hydrogen gas evolution; workups with LiAlH4/DIBAL-H should avoid forming intractable aluminum hydroxide emulsions. Never dispose of these materials in regular trash or down the drain — collect them as hazardous waste.</p>
+        <p class="manual-ko">알칼리 금속(나트륨, 칼륨)은 광유(mineral oil)에 완전히 잠기도록 하여 밀봉 용기에 보관합니다. 소량의 조각은 마른 티슈로 닦아낸 뒤, 그 티슈와 도구를 물이 담긴 용기에 최소 24시간 이상 담가 반응을 완전히 종료시킵니다. Grignard 시약은 이소프로판올을 천천히 적가하며 교반한 뒤, 수산화물 슬러리가 생기고 더 이상 반응이 없을 때까지 물을 적가하여 quenching합니다. 유기리튬 시약도 동일한 방식이지만 반응 속도가 빠르므로 이소프로판올을 더 천천히 넣어야 합니다. 금속수소화물(NaH, LiAlH4, DIBAL-H)은 이소프로판올로 quenching하며 수소 기체 발생을 관찰합니다. LiAlH4/DIBAL-H는 후처리 시 수산화알루미늄에 의한 에멀전 형성에 주의하세요. 이러한 물질들은 절대 일반 쓰레기나 하수구로 버리지 말고 위험 폐기물로 수거하세요.</p>
+        <p class="manual-refs">출처/References: MIT Chemistry Dept., <a href="https://chemistry.mit.edu/wp-content/uploads/2023/09/Chemical-Hygiene-Plan-MIT-2023-UPDATED-09.08.23.pdf" target="_blank" rel="noopener noreferrer">Chemical Hygiene Plan (2023) p.33</a> · USC EHS, <a href="https://ehs.usc.edu/research/lab/pyrophoric-and-water-reactive-chemicals/pyrophoric-quenching/" target="_blank" rel="noopener noreferrer">Quenching &amp; Disposal</a></p>
+      </article>
+
+      <article class="manual-section" id="manual-corrosive">
+        <h2>2. Strong Acids &amp; Bases / 강산·강염기</h2>
+        <p class="manual-en">Corrosive substances include strong acids (sulfuric, nitric, hydrochloric, hydrofluoric) and strong bases (sodium hydroxide, potassium hydroxide, ammonium hydroxide). Aqueous solutions of acids and bases can never be disposed of down the drain under any circumstances — collect them in appropriate waste containers and send them for hazardous waste disposal.</p>
+        <p class="manual-ko">부식성 물질에는 강산(황산, 질산, 염산, 불산)과 강염기(수산화나트륨, 수산화칼륨, 수산화암모늄)가 있습니다. 산/염기 수용액은 어떠한 경우에도 하수구로 폐기할 수 없으며, 전용 폐액 용기에 모아 위험물 폐기 절차로 처리해야 합니다.</p>
+        <p class="manual-refs">출처/References: MIT Chemistry Dept., <a href="https://chemistry.mit.edu/wp-content/uploads/2023/09/Chemical-Hygiene-Plan-MIT-2023-UPDATED-09.08.23.pdf" target="_blank" rel="noopener noreferrer">Chemical Hygiene Plan (2023) p.30, p.34</a></p>
+      </article>
+
+      <article class="manual-section" id="manual-peroxide">
+        <h2>3. Peroxide-Forming Chemicals / 과산화물 생성물질</h2>
+        <p class="manual-en">Peroxide-forming chemicals are classified into four classes. Class A (e.g. butadiene) is hazardous on storage even without concentration — dispose 3 months after opening. Class B (e.g. diethyl ether, THF, dioxane, isopropanol) can undergo explosive polymerization from peroxide concentration — dispose 6 months after opening, 12 months if unopened. Class C (e.g. acrylic acid, styrene) can explode from even small amounts of peroxide and usually contains a manufacturer's inhibitor. Class D chemicals (e.g. tert-butyl methyl ether/MTBE) may form peroxides under varying conditions but are normally stable — consult the SDS. Label every container with received and opened dates, and store sealed, light-protected, in air-impermeable containers.</p>
+        <p class="manual-ko">과산화물 생성 화학물질은 4개 등급으로 분류됩니다. Class A(예: 부타디엔)는 농축 없이도 보관 중 위험하며 개봉 후 3개월 이내 폐기합니다. Class B(예: 디에틸에터, THF, 다이옥세인, 이소프로판올)는 과산화물 농축으로 폭발성 중합이 가능하며 개봉 후 6개월/미개봉 12개월 이내 폐기합니다. Class C(예: 아크릴산, 스티렌)는 적은 양의 과산화물로도 폭발할 수 있고 보통 제조사가 안정제를 첨가합니다. Class D(예: MTBE)는 조건에 따라 과산화물이 생길 수 있으나 대체로 안정적입니다 — SDS를 참고하세요. 모든 용기에 입고일과 개봉일을 표기하고, 빛을 피해 밀봉된 불투과성 용기에 보관하세요.</p>
+        <p class="manual-refs">출처/References: Vanderbilt University Medical Center EHS, <a href="https://www.vumc.org/safety/sites/vumc.org.safety/files/public_files/chem/peroxide-forming-chemicals.pdf" target="_blank" rel="noopener noreferrer">Peroxide Forming Chemicals</a> (citing R.J. Kelly, <em>Chemical Health &amp; Safety</em>, 1996)</p>
+      </article>
+
+      <article class="manual-section" id="manual-cyanide">
+        <h2>4. Cyanide Compounds / 시안화물</h2>
+        <p class="manual-en">Cyanide salts (e.g. potassium cyanide) react with acids to release highly toxic hydrogen cyanide gas; moisture alone can also release cyanide gas. Store separately from acids, avoid moisture exposure, and use secondary containment. In case of fire, do not use CO2 extinguishers, since reaction with moisture can liberate HCN — use dry chemical extinguishers or copious water instead. Cyanide waste, and any materials contaminated with cyanide, must be treated as hazardous waste.</p>
+        <p class="manual-ko">시안화물 염(예: 시안화칼륨)은 산과 반응하여 맹독성 시안화수소(HCN) 가스를 발생시킵니다. 습기와의 접촉만으로도 가스가 방출될 수 있습니다. 산류와 분리 보관하고 습기를 피하며 2차 용기를 사용하세요. 화재 시 이산화탄소 소화기는 사용하지 마세요(수분과 반응해 HCN 발생 가능) — 건조분말 소화기나 다량의 물을 사용합니다. 시안화물 폐기물 및 오염된 물품은 모두 위험 폐기물로 처리해야 합니다.</p>
+        <p class="manual-refs">출처/References: SLAC National Accelerator Laboratory, <a href="https://www-group.slac.stanford.edu/esh/eshmanual/references/chemsafetyGuidePotassiumCyanide.pdf" target="_blank" rel="noopener noreferrer">Potassium Cyanide Safe Handling Guideline</a> (2013)</p>
+      </article>
+
+      <article class="manual-section" id="manual-halogenated">
+        <h2>5. Halogenated Solvents / 할로겐화 용매</h2>
+        <p class="manual-en">Halogenated organic compounds (e.g. chloroform) must be segregated into separate waste containers from other organic solvents. Chlorinated solvents can form explosive mixtures with certain substances, such as some amines, or acetone in the presence of base.</p>
+        <p class="manual-ko">할로겐화 유기화합물(예: 클로로폼)은 다른 유기용매와 분리된 별도 용기에 모아 폐기해야 합니다. 염소계 용매는 일부 아민류나 염기가 존재하는 아세톤 등 특정 물질과 혼합 시 폭발성 혼합물을 형성할 수 있습니다.</p>
+        <p class="manual-refs">출처/References: MIT Chemistry Dept., <a href="https://chemistry.mit.edu/wp-content/uploads/2023/09/Chemical-Hygiene-Plan-MIT-2023-UPDATED-09.08.23.pdf" target="_blank" rel="noopener noreferrer">Chemical Hygiene Plan (2023) p.33</a></p>
+      </article>
+
+      <article class="manual-section" id="manual-gas">
+        <h2>6. Compressed Gas Cylinders / 압축가스 실린더</h2>
+        <p class="manual-en">Restrain compressed gas cylinders securely with a chain, belt, or stand at all times, secured above the center of gravity (about 2/3 up the cylinder), to prevent them from falling. If a cylinder falls and its valve shears off, the escaping gas can propel the cylinder like an unguided rocket. Protect the valve with a securely attached cap whenever the cylinder is being moved or not in use (unless a regulator is attached). Never use a wrench, hammer, or lubricant to force a stuck valve or cap — use a specialized cylinder wrench or contact the supplier. Store flammable gases separately from oxygen and combustible materials by at least 20 feet, and secure highly toxic or pyrophoric gases from unauthorized access.</p>
+        <p class="manual-ko">압축가스 실린더는 항상 체인, 벨트, 스탠드로 단단히 고정하고, 무게중심(실린더 높이의 약 2/3 지점) 위쪽을 고정해 넘어지지 않도록 해야 합니다. 실린더가 넘어져 밸브가 파손되면 고압가스가 분출되며 실린더가 로켓처럼 발사될 수 있습니다. 이동 중이거나 사용하지 않을 때(레귤레이터 미연결 시)는 항상 밸브 보호캡을 씌워두세요. 고착된 밸브나 캡을 렌치, 망치, 윤활제로 억지로 열려고 하지 말고 전용 실린더 렌치를 사용하거나 공급업체에 문의하세요. 가연성 가스는 산소 및 가연물과 최소 20피트(약 6m) 이상 분리 보관하고, 고독성·파이로포릭 가스는 승인되지 않은 접근을 막을 수 있도록 보관하세요.</p>
+        <p class="manual-refs">출처/References: MIT EHS, <a href="https://ehs.mit.edu/chemical-safety-program/compressed-gas-cylinder-safety/" target="_blank" rel="noopener noreferrer">Compressed Gas Cylinder Safety</a></p>
+      </article>
+
+      <p class="manual-disclaimer">이 매뉴얼은 공개된 대학/연구기관 EHS 자료를 요약한 참고용 정보이며, 소속 기관의 공식 안전수칙·환경안전팀 지침을 대체하지 않습니다. This manual summarizes publicly available university/lab EHS materials for reference only, and does not replace your institution's official safety rules.</p>
     </section>
   </main>
 

@@ -879,6 +879,82 @@ input, select {
   padding: 0.25rem 0.6rem;
 }
 
+/* ---------- Safety manual ---------- */
+
+.manual-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 1.2rem 0 2rem;
+  padding: 1rem 1.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.manual-toc a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+
+.manual-toc a:hover {
+  text-decoration: underline;
+}
+
+.manual-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.5rem 1.7rem;
+  margin-bottom: 1.2rem;
+  scroll-margin-top: 5rem;
+}
+
+.manual-section h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.9rem;
+  color: #fff;
+}
+
+.manual-en, .manual-ko {
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin-bottom: 0.9rem;
+}
+
+.manual-en {
+  color: var(--text);
+}
+
+.manual-ko {
+  color: var(--text-dim);
+  border-top: 1px dashed var(--border);
+  padding-top: 0.9rem;
+}
+
+.manual-refs {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+}
+
+.manual-refs a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.manual-refs a:hover {
+  text-decoration: underline;
+}
+
+.manual-disclaimer {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-top: 1.5rem;
+  line-height: 1.6;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 700px) {

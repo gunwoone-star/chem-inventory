@@ -156,6 +156,28 @@ function renderResults() {
   }
 }
 
+function appendTextWithLinks(container, text) {
+  const urlPattern = /https?:\/\/[^\s]+/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = urlPattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      container.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+    }
+    const a = document.createElement("a");
+    a.href = match[0];
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = match[0];
+    a.style.color = "var(--accent)";
+    container.appendChild(a);
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) {
+    container.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+}
+
 function formatDateTime(isoString) {
   return new Date(isoString).toLocaleString("ko-KR", {
     month: "numeric",
@@ -244,8 +266,8 @@ function renderEditableField(container, chem, field) {
       a.style.color = "var(--accent)";
       contentEl.appendChild(a);
     } else {
-      contentEl.textContent = value;
       contentEl.style.whiteSpace = "pre-line";
+      appendTextWithLinks(contentEl, value);
     }
   } else {
     container.classList.add("empty");
@@ -813,8 +835,11 @@ shelfTabs.addEventListener("click", (e) => {
 
 const navMenuBtn = document.getElementById("nav-menu-btn");
 const navMenuDropdown = document.getElementById("nav-menu-dropdown");
-const viewSearch = document.getElementById("view-search");
-const viewLog = document.getElementById("view-log");
+const views = {
+  search: document.getElementById("view-search"),
+  log: document.getElementById("view-log"),
+  manual: document.getElementById("view-manual")
+};
 
 navMenuBtn.addEventListener("click", (e) => {
   e.stopPropagation();
@@ -834,14 +859,11 @@ navMenuDropdown.addEventListener("click", (e) => {
   item.classList.add("active");
   navMenuDropdown.hidden = true;
 
-  if (view === "log") {
-    viewSearch.hidden = true;
-    viewLog.hidden = false;
-    loadUsageLog();
-  } else {
-    viewLog.hidden = true;
-    viewSearch.hidden = false;
+  for (const [key, el] of Object.entries(views)) {
+    el.hidden = key !== view;
   }
+
+  if (view === "log") loadUsageLog();
 });
 
 // ---------- Usage log view ----------
