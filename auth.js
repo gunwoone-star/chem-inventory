@@ -44,6 +44,19 @@ async function refreshProfile() {
   currentProfile = data;
 }
 
+async function refreshAdminStatus() {
+  if (!currentUser) {
+    isAdmin = false;
+    return;
+  }
+  const { data } = await supabaseClient
+    .from("admin_users")
+    .select("id")
+    .eq("id", currentUser.id)
+    .maybeSingle();
+  isAdmin = !!data;
+}
+
 function updateAuthUI() {
   if (currentUser) {
     authGuest.hidden = true;
@@ -63,12 +76,12 @@ function updateAuthUI() {
 async function initAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
   currentUser = session?.user || null;
-  await refreshProfile();
+  await Promise.all([refreshProfile(), refreshAdminStatus()]);
   updateAuthUI();
 
   supabaseClient.auth.onAuthStateChange(async (_event, session) => {
     currentUser = session?.user || null;
-    await refreshProfile();
+    await Promise.all([refreshProfile(), refreshAdminStatus()]);
     updateAuthUI();
   });
 }

@@ -111,8 +111,6 @@
           <div class="chem-tabs">
             <button class="tab-btn active" data-tab="info">기본정보</button>
             <button class="tab-btn" data-tab="msds">MSDS</button>
-            <button class="tab-btn" data-tab="hazard">위험도</button>
-            <button class="tab-btn" data-tab="quenching">Quenching</button>
             <button class="tab-btn" data-tab="disposal">처리방법</button>
             <button class="tab-btn" data-tab="storage">보관방법</button>
           </div>
@@ -126,10 +124,28 @@
                 <div><span class="label">카탈로그 번호</span><span class="chem-catalogue"></span></div>
               </div>
             </div>
-            <div class="tab-panel" data-panel="msds" data-field="msds_url"></div>
-            <div class="tab-panel" data-panel="hazard" data-field="hazard_class"></div>
-            <div class="tab-panel" data-panel="quenching" data-field="quenching_method"></div>
-            <div class="tab-panel" data-panel="disposal" data-field="disposal_method"></div>
+            <div class="tab-panel" data-panel="msds">
+              <div class="ghs-row" data-ghs-display></div>
+              <div class="pubchem-link-row"></div>
+              <div class="subfield" data-subfield="hazard_class">
+                <p class="subfield-label">위험 등급</p>
+                <div class="subfield-body"></div>
+              </div>
+              <div class="subfield" data-subfield="msds_url">
+                <p class="subfield-label">MSDS 링크 (직접 확인한 SDS 문서 주소)</p>
+                <div class="subfield-body"></div>
+              </div>
+            </div>
+            <div class="tab-panel" data-panel="disposal">
+              <div class="subfield" data-subfield="quenching_method">
+                <p class="subfield-label">Quenching 방법</p>
+                <div class="subfield-body"></div>
+              </div>
+              <div class="subfield" data-subfield="disposal_method">
+                <p class="subfield-label">폐기 방법</p>
+                <div class="subfield-body"></div>
+              </div>
+            </div>
             <div class="tab-panel" data-panel="storage" data-field="storage_method"></div>
           </div>
 

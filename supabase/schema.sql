@@ -64,6 +64,7 @@ create table if not exists chemicals (
   quenching_method text,
   disposal_method text,
   storage_method text,
+  ghs_pictograms text,                  -- 콤마로 구분된 GHS 픽토그램 코드 (예: flammable,corrosive)
 
   -- 사용 상태
   status text not null default 'available' check (status in ('available', 'in_use')),
@@ -145,3 +146,22 @@ create policy "Authenticated users can insert inventory changes"
   on inventory_changes for insert
   to authenticated
   with check (true);
+
+-- ---------- admin_users (관리자 허용 목록) ----------
+-- 앱에서는 절대 쓰기 권한을 주지 않음 — SQL Editor에서만 등록 가능
+create table if not exists admin_users (
+  id uuid primary key references auth.users(id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+alter table admin_users enable row level security;
+
+create policy "Users can check their own admin status"
+  on admin_users for select
+  to authenticated
+  using (auth.uid() = id);
+
+create policy "Admins can delete usage logs"
+  on usage_logs for delete
+  to authenticated
+  using (exists (select 1 from admin_users where id = auth.uid()));

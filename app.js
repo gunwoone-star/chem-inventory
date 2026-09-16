@@ -14,14 +14,6 @@ const CATEGORY_LABELS = {
   box5: "Box 5"
 };
 
-const EDITABLE_FIELDS = {
-  msds: "msds_url",
-  hazard: "hazard_class",
-  quenching: "quenching_method",
-  disposal: "disposal_method",
-  storage: "storage_method"
-};
-
 const FIELD_LABELS = {
   msds_url: "MSDS 링크",
   hazard_class: "위험도 등급",
@@ -30,9 +22,22 @@ const FIELD_LABELS = {
   storage_method: "보관 방법"
 };
 
+const GHS_PICTOGRAMS = [
+  { code: "explosive", label: "폭발성", emoji: "💥" },
+  { code: "flammable", label: "인화성", emoji: "🔥" },
+  { code: "oxidizing", label: "산화성", emoji: "🟠" },
+  { code: "gas", label: "고압가스", emoji: "💨" },
+  { code: "corrosive", label: "부식성", emoji: "🧪" },
+  { code: "toxic", label: "급성독성", emoji: "☠" },
+  { code: "irritant", label: "자극성", emoji: "❗" },
+  { code: "health", label: "건강유해성", emoji: "🫁" },
+  { code: "environment", label: "환경유해성", emoji: "🐟" }
+];
+
 let chemicalsById = new Map();
 let profileNameById = new Map();
 let lastResults = null;
+let isAdmin = false;
 
 const searchInput = document.getElementById("search-input");
 const shelfTabs = document.getElementById("shelf-tabs");
@@ -168,10 +173,9 @@ function buildCard(chem) {
     badge.textContent = "사용가능";
   }
 
-  for (const [tabKey, field] of Object.entries(EDITABLE_FIELDS)) {
-    const panel = li.querySelector(`.tab-panel[data-panel="${tabKey}"]`);
-    renderEditablePanel(panel, chem, field);
-  }
+  renderMsdsPanel(li.querySelector('.tab-panel[data-panel="msds"]'), chem);
+  renderDisposalPanel(li.querySelector('.tab-panel[data-panel="disposal"]'), chem);
+  renderEditableField(li.querySelector('.tab-panel[data-panel="storage"]'), chem, "storage_method");
 
   const checkoutBtn = li.querySelector(".checkout-btn");
   const returnBtn = li.querySelector(".return-btn");
@@ -204,9 +208,9 @@ function buildCard(chem) {
   return node;
 }
 
-function renderEditablePanel(panel, chem, field) {
-  panel.innerHTML = "";
-  panel.classList.remove("empty");
+function renderEditableField(container, chem, field) {
+  container.innerHTML = "";
+  container.classList.remove("empty");
 
   const value = chem[field];
   const contentEl = document.createElement("div");
@@ -225,10 +229,10 @@ function renderEditablePanel(panel, chem, field) {
       contentEl.style.whiteSpace = "pre-line";
     }
   } else {
-    panel.classList.add("empty");
+    container.classList.add("empty");
   }
 
-  panel.appendChild(contentEl);
+  container.appendChild(contentEl);
 
   if (currentUser) {
     const editBtn = document.createElement("button");
@@ -236,13 +240,13 @@ function renderEditablePanel(panel, chem, field) {
     editBtn.style.marginTop = "0.6rem";
     editBtn.style.fontSize = "0.78rem";
     editBtn.textContent = value ? "수정" : "정보 추가";
-    editBtn.addEventListener("click", () => openFieldEditor(panel, chem, field));
-    panel.appendChild(editBtn);
+    editBtn.addEventListener("click", () => openFieldEditor(container, chem, field));
+    container.appendChild(editBtn);
   }
 }
 
-function openFieldEditor(panel, chem, field) {
-  panel.innerHTML = "";
+function openFieldEditor(container, chem, field) {
+  container.innerHTML = "";
   const textarea = document.createElement("textarea");
   textarea.value = chem[field] || "";
   textarea.rows = 3;
@@ -280,15 +284,149 @@ function openFieldEditor(panel, chem, field) {
     }
 
     chem[field] = newValue || null;
-    renderEditablePanel(panel, chem, field);
+    renderEditableField(container, chem, field);
   });
 
-  cancelBtn.addEventListener("click", () => renderEditablePanel(panel, chem, field));
+  cancelBtn.addEventListener("click", () => renderEditableField(container, chem, field));
 
-  panel.appendChild(textarea);
-  panel.appendChild(document.createElement("br"));
-  panel.appendChild(saveBtn);
-  panel.appendChild(cancelBtn);
+  container.appendChild(textarea);
+  container.appendChild(document.createElement("br"));
+  container.appendChild(saveBtn);
+  container.appendChild(cancelBtn);
+}
+
+// ---------- MSDS tab: GHS pictograms + safety-info links + subfields ----------
+
+function pubchemLink(casNo) {
+  return `https://pubchem.ncbi.nlm.nih.gov/#query=${encodeURIComponent(casNo)}`;
+}
+
+function sigmaAldrichKrLink(casNo) {
+  const q = encodeURIComponent(casNo);
+  return `https://www.sigmaaldrich.com/KR/ko/search/${q}?focus=products&page=1&perpage=30&sort=relevance&term=${q}&type=cas_number`;
+}
+
+function renderMsdsPanel(panel, chem) {
+  renderGhsDisplay(panel.querySelector("[data-ghs-display]"), chem);
+
+  const linkRow = panel.querySelector(".pubchem-link-row");
+  linkRow.innerHTML = "";
+  if (chem.cas_no) {
+    const pubchemA = document.createElement("a");
+    pubchemA.href = pubchemLink(chem.cas_no);
+    pubchemA.target = "_blank";
+    pubchemA.rel = "noopener noreferrer";
+    pubchemA.textContent = "🔗 PubChem 안전정보 (GHS·SDS)";
+    linkRow.appendChild(pubchemA);
+
+    if (chem.company && /sigma/i.test(chem.company)) {
+      const sigmaA = document.createElement("a");
+      sigmaA.href = sigmaAldrichKrLink(chem.cas_no);
+      sigmaA.target = "_blank";
+      sigmaA.rel = "noopener noreferrer";
+      sigmaA.textContent = "🔗 Sigma-Aldrich 한국어 SDS 검색";
+      linkRow.appendChild(sigmaA);
+    }
+  } else {
+    linkRow.innerHTML = '<p class="ghs-empty-note">CAS 번호가 없어 자동 검색 링크를 만들 수 없습니다.</p>';
+  }
+
+  renderEditableField(panel.querySelector('[data-subfield="hazard_class"] .subfield-body'), chem, "hazard_class");
+  renderEditableField(panel.querySelector('[data-subfield="msds_url"] .subfield-body'), chem, "msds_url");
+}
+
+function renderGhsDisplay(container, chem) {
+  container.innerHTML = "";
+
+  const codes = (chem.ghs_pictograms || "").split(",").map((s) => s.trim()).filter(Boolean);
+
+  if (codes.length === 0) {
+    const note = document.createElement("span");
+    note.className = "ghs-empty-note";
+    note.textContent = "지정된 GHS 픽토그램이 없습니다.";
+    container.appendChild(note);
+  } else {
+    for (const code of codes) {
+      const info = GHS_PICTOGRAMS.find((g) => g.code === code);
+      if (!info) continue;
+      const icon = document.createElement("div");
+      icon.className = "ghs-icon";
+      icon.title = info.label;
+      icon.innerHTML = `<span class="ghs-icon-inner">${info.emoji}</span>`;
+      container.appendChild(icon);
+    }
+  }
+
+  if (currentUser) {
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn-ghost edit-field-btn";
+    editBtn.style.fontSize = "0.78rem";
+    editBtn.textContent = "픽토그램 수정";
+    editBtn.addEventListener("click", () => openGhsEditor(container, chem));
+    container.appendChild(editBtn);
+  }
+}
+
+function openGhsEditor(container, chem) {
+  container.innerHTML = "";
+  const selected = new Set((chem.ghs_pictograms || "").split(",").map((s) => s.trim()).filter(Boolean));
+
+  const editRow = document.createElement("div");
+  editRow.className = "ghs-edit-row";
+
+  for (const g of GHS_PICTOGRAMS) {
+    const label = document.createElement("label");
+    label.className = "ghs-checkbox";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = g.code;
+    cb.checked = selected.has(g.code);
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(`${g.emoji} ${g.label}`));
+    editRow.appendChild(label);
+  }
+
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "btn-primary";
+  saveBtn.textContent = "저장";
+  saveBtn.style.marginRight = "0.5rem";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "btn-ghost";
+  cancelBtn.textContent = "취소";
+
+  saveBtn.addEventListener("click", async () => {
+    const codes = [...editRow.querySelectorAll("input:checked")].map((cb) => cb.value);
+    const newValue = codes.join(",") || null;
+    saveBtn.disabled = true;
+
+    const { error } = await supabaseClient
+      .from("chemicals")
+      .update({ ghs_pictograms: newValue, updated_at: new Date().toISOString() })
+      .eq("id", chem.id);
+
+    if (error) {
+      alert("저장에 실패했습니다: " + error.message);
+      saveBtn.disabled = false;
+      return;
+    }
+
+    chem.ghs_pictograms = newValue;
+    renderGhsDisplay(container, chem);
+  });
+
+  cancelBtn.addEventListener("click", () => renderGhsDisplay(container, chem));
+
+  container.appendChild(editRow);
+  container.appendChild(saveBtn);
+  container.appendChild(cancelBtn);
+}
+
+// ---------- 처리방법 tab: quenching + disposal subfields ----------
+
+function renderDisposalPanel(panel, chem) {
+  renderEditableField(panel.querySelector('[data-subfield="quenching_method"] .subfield-body'), chem, "quenching_method");
+  renderEditableField(panel.querySelector('[data-subfield="disposal_method"] .subfield-body'), chem, "disposal_method");
 }
 
 // ---------- Tab switching (event delegation) ----------
@@ -744,9 +882,56 @@ async function loadUsageLog() {
 
     li.appendChild(nameSpan);
     li.appendChild(statusSpan);
+
+    if (isAdmin) {
+      const actions = document.createElement("span");
+      actions.className = "log-item-admin-actions";
+
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn-ghost";
+      editBtn.textContent = "메모 수정";
+      editBtn.addEventListener("click", () => editLogNote(log.id, log.amount_used_note));
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "btn-ghost-danger";
+      deleteBtn.textContent = "삭제";
+      deleteBtn.addEventListener("click", () => deleteLogEntry(log.id));
+
+      actions.appendChild(editBtn);
+      actions.appendChild(deleteBtn);
+      li.appendChild(actions);
+    }
+
     li.appendChild(detail);
     logList.appendChild(li);
   }
+}
+
+async function editLogNote(logId, currentNote) {
+  const newNote = prompt("사용량 메모 수정", currentNote || "");
+  if (newNote === null) return;
+
+  const { error } = await supabaseClient
+    .from("usage_logs")
+    .update({ amount_used_note: newNote.trim() || null })
+    .eq("id", logId);
+
+  if (error) {
+    alert("수정에 실패했습니다: " + error.message);
+    return;
+  }
+  await loadUsageLog();
+}
+
+async function deleteLogEntry(logId) {
+  if (!confirm("이 사용기록을 삭제할까요? 되돌릴 수 없습니다.")) return;
+
+  const { error } = await supabaseClient.from("usage_logs").delete().eq("id", logId);
+  if (error) {
+    alert("삭제에 실패했습니다: " + error.message);
+    return;
+  }
+  await loadUsageLog();
 }
 
 initAuth();
