@@ -516,8 +516,7 @@ input, select {
   display: block;
 }
 
-.tab-panel.empty::before,
-.subfield-body.empty::before {
+.tab-panel.empty::before {
   content: "아직 등록된 정보가 없습니다.";
   color: var(--text-dim);
   font-style: italic;
@@ -540,85 +539,19 @@ input, select {
   gap: 0.7rem;
 }
 
-/* ---------- MSDS / disposal subfields ---------- */
+/* ---------- MSDS links ---------- */
 
-.subfield {
-  margin-bottom: 1.1rem;
-}
-
-.subfield:last-child {
-  margin-bottom: 0;
-}
-
-.subfield-label {
-  font-size: 0.75rem;
-  color: var(--text-dim);
-  margin-bottom: 0.3rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.subfield-body {
-  color: var(--text);
-  font-size: 0.9rem;
-}
-
-.ghs-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-items: center;
-  margin-bottom: 0.9rem;
-}
-
-.ghs-icon {
-  width: 42px;
-  height: 42px;
-  background: #fff;
-  border: 2px solid #dc2626;
-  transform: rotate(45deg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.ghs-icon-inner {
-  transform: rotate(-45deg);
-  font-size: 1.1rem;
-}
-
-.ghs-empty-note {
+.link-empty-note {
   color: var(--text-dim);
   font-size: 0.85rem;
   font-style: italic;
-}
-
-.ghs-edit-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.7rem;
-}
-
-.ghs-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.35rem 0.7rem 0.35rem 0.5rem;
-  font-size: 0.78rem;
-  color: var(--text-dim);
 }
 
 .pubchem-link-row {
   margin-bottom: 1rem;
 }
 
-.pubchem-link-row a,
-.vendor-link-row a {
+.pubchem-link-row a {
   display: inline-block;
   color: var(--accent);
   font-size: 0.85rem;
@@ -630,8 +563,7 @@ input, select {
   margin-bottom: 0.4rem;
 }
 
-.pubchem-link-row a:hover,
-.vendor-link-row a:hover {
+.pubchem-link-row a:hover {
   border-color: var(--accent);
 }
 
