@@ -655,40 +655,122 @@ addCategoryTabs.addEventListener("click", (e) => {
 });
 
 // ---------- Paste-from-order-log parsing ----------
-// Expected column order (tab-separated, copied straight from the lab's purchase
-// order-log spreadsheet): Company, CAS No., Catalogue No., compound name,
-// purity/conc., quantity (ea), size, form
+// Supports two formats, auto-detected by column count:
+//
+// 1. Full row copied straight from the lab's actual purchase order-log
+//    spreadsheet (columns A-O, 15 cells): name / order date / actual order
+//    date / recipient / receipt date / storage / Company / CAS No. /
+//    Catalogue No. / compound name / purity·conc. / quantity(ea) / size /
+//    formula / form. Cells can be quoted (Excel wraps a cell in double
+//    quotes when copying if it contains embedded tabs/newlines), so this is
+//    parsed with a small CSV/TSV-aware parser, not a naive split.
+//
+// 2. The shorter simplified form (8-10 cells): Company / CAS No. /
+//    Catalogue No. / compound name / purity·conc. / quantity(ea) / size /
+//    form, optionally followed by storage position and/or category.
 
 const addPasteTextarea = document.getElementById("add-paste");
 const pastePreview = document.getElementById("paste-preview");
 
-function parseOrderLogRow(line) {
-  const cells = line.split("\t").map((c) => c.trim());
-  if (cells.length < 8) return null;
+// Parses tab-separated text into rows of cells, honoring CSV-style double-quoting
+// (a quoted cell may contain literal tabs/newlines; "" inside quotes is a literal quote).
+function parseTsvText(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
 
-  const [company, cas_no, catalogue_no, compound_name, purity_conc, quantityStr, size, form, position, categoryText] = cells;
-  if (!compound_name) return null;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
 
-  return {
-    company: company || null,
-    cas_no: cas_no || null,
-    catalogue_no: catalogue_no || null,
-    compound_name,
-    purity_conc: purity_conc || null,
-    quantity_total: parseFloat(quantityStr) || 1,
-    container_size: size || null,
-    phase: form || null,
-    storage_position: position || null,
-    category: resolveCategoryInput(categoryText)
-  };
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') {
+          field += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += ch;
+      }
+      continue;
+    }
+
+    if (ch === '"' && field === "") {
+      inQuotes = true;
+    } else if (ch === "\t") {
+      row.push(field);
+      field = "";
+    } else if (ch === "\r") {
+      // skip, \n (or end) handles the line break
+    } else if (ch === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+    } else {
+      field += ch;
+    }
+  }
+
+  if (field !== "" || row.length > 0) {
+    row.push(field);
+    rows.push(row);
+  }
+
+  return rows.filter((r) => r.some((c) => c.trim() !== ""));
+}
+
+function detectSingleBoxCategory(text) {
+  if (!text) return null;
+  const m = text.trim().match(/^box\s*([1-5])$/i);
+  return m ? `box${m[1]}` : null;
+}
+
+function parseOrderLogCells(cells) {
+  cells = cells.map((c) => c.trim());
+
+  if (cells.length >= 13) {
+    // Full A-O order-log row.
+    const [, , , , , storage, company, cas_no, catalogue_no, compound_name, purity_conc, quantityStr, size, , form] = cells;
+    if (!compound_name) return null;
+    return {
+      company: company || null,
+      cas_no: cas_no || null,
+      catalogue_no: catalogue_no || null,
+      compound_name,
+      purity_conc: purity_conc || null,
+      quantity_total: parseFloat(quantityStr) || 1,
+      container_size: size || null,
+      phase: form || null,
+      storage_position: storage || null,
+      category: detectSingleBoxCategory(storage)
+    };
+  }
+
+  if (cells.length >= 8) {
+    const [company, cas_no, catalogue_no, compound_name, purity_conc, quantityStr, size, form, position, categoryText] = cells;
+    if (!compound_name) return null;
+    return {
+      company: company || null,
+      cas_no: cas_no || null,
+      catalogue_no: catalogue_no || null,
+      compound_name,
+      purity_conc: purity_conc || null,
+      quantity_total: parseFloat(quantityStr) || 1,
+      container_size: size || null,
+      phase: form || null,
+      storage_position: position || null,
+      category: resolveCategoryInput(categoryText)
+    };
+  }
+
+  return null;
 }
 
 function parsePastedRows(text) {
-  return text
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map(parseOrderLogRow);
+  return parseTsvText(text).map(parseOrderLogCells);
 }
 
 addPasteTextarea.addEventListener("input", () => {
@@ -704,7 +786,7 @@ addPasteTextarea.addEventListener("input", () => {
 
   if (validRows.length === 0) {
     pastePreview.style.color = "var(--danger)";
-    pastePreview.textContent = "형식을 인식하지 못했습니다. Company~form까지 8개 칸(뒤에 위치 1칸 추가 가능)을 탭으로 구분해 붙여넣어주세요.";
+    pastePreview.textContent = "형식을 인식하지 못했습니다. 구매장부에서 행 전체를 복사해 붙여넣거나, Company~form 8개 칸(+ 위치/분류 선택)을 탭으로 구분해 붙여넣어주세요.";
   } else {
     pastePreview.style.color = "var(--success)";
     const names = validRows.map((r) => r.compound_name).join(", ");
