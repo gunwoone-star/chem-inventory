@@ -199,20 +199,25 @@
   <!-- 타 연구실 시약 카드 템플릿 -->
   <template id="external-chem-template">
     <li class="ext-card">
-      <div class="ext-card-main">
+      <div class="ext-card-header" role="button" tabindex="0">
+        <span class="ext-chevron">▸</span>
         <span class="ext-name"></span>
         <span class="ext-purity"></span>
         <button type="button" class="ext-available-badge"></button>
       </div>
-      <div class="ext-card-meta">
-        <span class="ext-cas"></span>
-        <span class="ext-lab-tag"></span>
-      </div>
-      <div class="ext-card-details">
-        <div><span class="label">회사</span><span class="ext-company"></span></div>
-        <div><span class="label">용량</span><span class="ext-size"></span></div>
-        <div><span class="label">상태</span><span class="ext-phase"></span></div>
-        <div><span class="label">위치</span><span class="ext-location"></span></div>
+      <div class="ext-details">
+        <div class="ext-details-inner">
+          <div class="ext-card-meta">
+            <span class="ext-cas"></span>
+            <span class="ext-lab-tag"></span>
+          </div>
+          <div class="ext-card-details">
+            <div><span class="label">회사</span><span class="ext-company"></span></div>
+            <div><span class="label">용량</span><span class="ext-size"></span></div>
+            <div><span class="label">상태</span><span class="ext-phase"></span></div>
+            <div><span class="label">위치</span><span class="ext-location"></span></div>
+          </div>
+        </div>
       </div>
     </li>
   </template>

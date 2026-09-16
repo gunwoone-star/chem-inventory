@@ -1061,6 +1061,21 @@ let extCurrentPage = 1;
 let extTotalCount = 0;
 let extSearchRequestId = 0;
 
+extResultsList.addEventListener("click", (e) => {
+  if (e.target.closest(".ext-available-badge")) return;
+  const header = e.target.closest(".ext-card-header");
+  if (!header) return;
+  header.closest(".ext-card").classList.toggle("expanded");
+});
+
+extResultsList.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const header = e.target.closest(".ext-card-header");
+  if (!header) return;
+  e.preventDefault();
+  header.closest(".ext-card").classList.toggle("expanded");
+});
+
 async function searchExternalChemicals(resetPage = true) {
   if (resetPage) extCurrentPage = 1;
 
@@ -1137,7 +1152,10 @@ function buildExternalCard(chem) {
     badge.disabled = true;
     badge.title = "로그인이 필요합니다";
   } else {
-    badge.addEventListener("click", () => toggleExternalAvailability(chem));
+    badge.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleExternalAvailability(chem);
+    });
   }
 
   return node;

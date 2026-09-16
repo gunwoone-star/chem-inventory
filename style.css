@@ -976,21 +976,57 @@ input, select {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 1rem 1.2rem;
+  overflow: hidden;
 }
 
-.ext-card-main {
+.ext-card-header {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   flex-wrap: wrap;
-  margin-bottom: 0.5rem;
+  padding: 0.9rem 1.2rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ext-card-header:hover {
+  background: var(--surface-2);
+}
+
+.ext-chevron {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.ext-card.expanded .ext-chevron {
+  transform: rotate(90deg);
 }
 
 .ext-name {
   font-size: 0.95rem;
   font-weight: 600;
   flex: 1 1 auto;
+}
+
+.ext-details {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.25s ease;
+}
+
+.ext-card.expanded .ext-details {
+  grid-template-rows: 1fr;
+}
+
+.ext-details-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.ext-card.expanded .ext-details-inner {
+  padding: 0 1.2rem 1.2rem;
 }
 
 .ext-purity {
