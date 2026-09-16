@@ -16,7 +16,9 @@ const CATEGORY_LABELS = {
 
 const FIELD_LABELS = {
   disposal_method: "처리 방법",
-  storage_method: "보관 방법"
+  storage_method: "보관 방법",
+  handling_notes: "취급 시 주의사항 (한 줄에 한 항목씩 입력하면 각 줄이 항목으로 표시됩니다)",
+  hazard_class: "간단한 위험 태그 (예: 부식성, 인화성 액체)"
 };
 
 let chemicalsById = new Map();
@@ -200,6 +202,7 @@ function buildCard(chem) {
   }
 
   renderMsdsPanel(li.querySelector('.tab-panel[data-panel="msds"]'), chem);
+  renderEditableField(li.querySelector('.tab-panel[data-panel="handling"]'), chem, "handling_notes");
   renderEditableField(li.querySelector('.tab-panel[data-panel="disposal"]'), chem, "disposal_method");
   renderEditableField(li.querySelector('.tab-panel[data-panel="storage"]'), chem, "storage_method");
 
@@ -333,6 +336,8 @@ function sigmaAldrichKrLink(casNo) {
 }
 
 function renderMsdsPanel(panel, chem) {
+  renderEditableField(panel.querySelector(".hazard-tag"), chem, "hazard_class");
+
   const linkRow = panel.querySelector(".pubchem-link-row");
   linkRow.innerHTML = "";
   if (chem.cas_no) {

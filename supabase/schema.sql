@@ -64,7 +64,8 @@ create table if not exists chemicals (
   quenching_method text,
   disposal_method text,
   storage_method text,
-  ghs_pictograms text,                  -- 콤마로 구분된 GHS 픽토그램 코드 (예: flammable,corrosive)
+  handling_notes text,                  -- 취급 시 주의사항 (불렛 포인트 텍스트)
+  ghs_pictograms text,                  -- 콤마로 구분된 GHS 픽토그램 코드 (예: flammable,corrosive) — 현재 UI에서는 미사용
 
   -- 사용 상태
   status text not null default 'available' check (status in ('available', 'in_use')),

@@ -175,6 +175,7 @@
           <div class="chem-tabs">
             <button class="tab-btn active" data-tab="info">기본정보</button>
             <button class="tab-btn" data-tab="msds">MSDS</button>
+            <button class="tab-btn" data-tab="handling">취급방법</button>
             <button class="tab-btn" data-tab="disposal">처리방법</button>
             <button class="tab-btn" data-tab="storage">보관방법</button>
           </div>
@@ -189,8 +190,10 @@
               </div>
             </div>
             <div class="tab-panel" data-panel="msds">
+              <div class="hazard-tag" data-field="hazard_class"></div>
               <div class="pubchem-link-row"></div>
             </div>
+            <div class="tab-panel" data-panel="handling" data-field="handling_notes"></div>
             <div class="tab-panel" data-panel="disposal" data-field="disposal_method"></div>
             <div class="tab-panel" data-panel="storage" data-field="storage_method"></div>
           </div>

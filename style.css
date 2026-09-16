@@ -541,6 +541,22 @@ input, select {
 
 /* ---------- MSDS links ---------- */
 
+.hazard-tag {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #fbbf24;
+  margin-bottom: 0.8rem;
+}
+
+.hazard-tag.empty::before {
+  content: none;
+}
+
+.hazard-tag .edit-field-btn {
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+
 .link-empty-note {
   color: var(--text-dim);
   font-size: 0.85rem;
