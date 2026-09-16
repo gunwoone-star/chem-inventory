@@ -166,3 +166,37 @@ create policy "Admins can delete usage logs"
   on usage_logs for delete
   to authenticated
   using (exists (select 1 from admin_users where id = auth.uid()));
+
+-- ---------- external_chemicals (타 연구실 시약 검색) ----------
+-- 검색 + 위치 파악만을 위한 참고용 데이터. MSDS/취급/처리/보관/체크아웃 필드 없음.
+create table if not exists external_chemicals (
+  id uuid primary key default gen_random_uuid(),
+  lab_code text not null,
+  lab_name text not null,
+  compound_name text not null,
+  cas_no text,
+  company text,
+  container_size text,
+  purity_conc text,
+  phase text,
+  location text,
+  quantity_total numeric,
+  is_available boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists external_chemicals_name_idx on external_chemicals using gin (to_tsvector('simple', compound_name));
+create index if not exists external_chemicals_cas_idx on external_chemicals (cas_no);
+create index if not exists external_chemicals_lab_idx on external_chemicals (lab_code);
+
+alter table external_chemicals enable row level security;
+
+create policy "Anyone can view external chemicals"
+  on external_chemicals for select
+  using (true);
+
+create policy "Authenticated users can update availability"
+  on external_chemicals for update
+  to authenticated
+  using (true);

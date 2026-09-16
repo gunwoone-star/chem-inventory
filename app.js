@@ -7,6 +7,7 @@ const CATEGORY_LABELS = {
   acids: "Acids",
   bases: "Bases",
   deuteriums: "Deuteriums",
+  special_gas: "특수가스",
   box1: "Box 1",
   box2: "Box 2",
   box3: "Box 3",
@@ -227,6 +228,27 @@ function appendTextWithLinks(container, text) {
   }
 }
 
+function formatPurity(value) {
+  if (value === null || value === undefined || value === "") return "";
+  const trimmed = String(value).trim();
+  // A bare decimal fraction like "0.98" or "0.995" means a percentage stored as a ratio.
+  // Anything already containing a "%" sign or letters (e.g. ">99.5%", "ReagentPlus") is left as-is.
+  if (/^\d*\.?\d+$/.test(trimmed)) {
+    const num = parseFloat(trimmed);
+    if (!isNaN(num)) {
+      if (num > 0 && num <= 1) {
+        const pct = Math.round(num * 10000) / 100;
+        return `${pct}%`;
+      }
+      // A bare number like "98" (no % sign) in a purity field almost always means 98%.
+      if (num > 1 && num <= 100) {
+        return `${num}%`;
+      }
+    }
+  }
+  return trimmed;
+}
+
 function formatDateTime(isoString) {
   return new Date(isoString).toLocaleString("ko-KR", {
     month: "numeric",
@@ -242,7 +264,7 @@ function buildCard(chem) {
   li.dataset.id = chem.id;
 
   li.querySelector(".chem-name").textContent = chem.compound_name;
-  li.querySelector(".chem-purity-inline").textContent = chem.purity_conc || "";
+  li.querySelector(".chem-purity-inline").textContent = formatPurity(chem.purity_conc);
   li.querySelector(".chem-position-inline").textContent = chem.storage_position || "-";
   li.querySelector(".chem-company-inline").textContent = chem.company || "-";
   li.querySelector(".chem-cas").textContent = chem.cas_no ? `CAS ${chem.cas_no}` : "CAS 없음";
@@ -251,7 +273,7 @@ function buildCard(chem) {
   li.querySelector(".chem-size").textContent = chem.container_size || "-";
   li.querySelector(".chem-position").textContent = chem.storage_position || "-";
   li.querySelector(".chem-quantity").textContent = `${chem.quantity_total}개`;
-  li.querySelector(".chem-purity").textContent = chem.purity_conc || "-";
+  li.querySelector(".chem-purity").textContent = formatPurity(chem.purity_conc) || "-";
   li.querySelector(".chem-container").textContent = chem.container_type || "-";
   li.querySelector(".chem-phase").textContent = chem.phase || "-";
   li.querySelector(".chem-catalogue").textContent = chem.catalogue_no || "-";
@@ -792,7 +814,8 @@ const navMenuDropdown = document.getElementById("nav-menu-dropdown");
 const views = {
   search: document.getElementById("view-search"),
   log: document.getElementById("view-log"),
-  manual: document.getElementById("view-manual")
+  manual: document.getElementById("view-manual"),
+  external: document.getElementById("view-external")
 };
 
 navMenuBtn.addEventListener("click", (e) => {
@@ -818,6 +841,7 @@ navMenuDropdown.addEventListener("click", (e) => {
   }
 
   if (view === "log") loadUsageLog();
+  if (view === "external") searchExternalChemicals();
 });
 
 // ---------- Usage log view ----------
@@ -1009,5 +1033,159 @@ async function deleteLogEntry(logId) {
   }
   await loadUsageLog();
 }
+
+// ---------- External (other labs) chemical search ----------
+
+const LAB_LABELS = {
+  EL: "이은성 교수님",
+  syhong: "홍승윤 교수님",
+  CBLee: "이철범 교수님",
+  KTKim: "김경택 교수님",
+  HGL: "이홍근 교수님",
+  SBPark: "박승범 교수님",
+  Leelab: "이동환 교수님"
+};
+
+const extSearchInput = document.getElementById("ext-search-input");
+const extSearchBtn = document.getElementById("ext-search-btn");
+const extSearchModeTabs = document.getElementById("ext-search-mode-tabs");
+const extLabTabs = document.getElementById("ext-lab-tabs");
+const extResultsList = document.getElementById("ext-results-list");
+const extResultCountEl = document.getElementById("ext-result-count");
+const extPaginationEl = document.getElementById("ext-pagination");
+const extTemplate = document.getElementById("external-chem-template");
+
+let extSearchMode = "name";
+let extCurrentLab = "";
+let extCurrentPage = 1;
+let extTotalCount = 0;
+let extSearchRequestId = 0;
+
+async function searchExternalChemicals(resetPage = true) {
+  if (resetPage) extCurrentPage = 1;
+
+  const requestId = ++extSearchRequestId;
+  extResultsList.innerHTML = '<li class="results-loading">검색 중...</li>';
+  extPaginationEl.hidden = true;
+
+  const from = (extCurrentPage - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  let query = supabaseClient
+    .from("external_chemicals")
+    .select("*", { count: "exact" })
+    .order("compound_name")
+    .range(from, to);
+
+  if (extCurrentLab) query = query.eq("lab_code", extCurrentLab);
+
+  const q = sanitizeForFilter(extSearchInput.value.trim());
+  if (q) {
+    query = extSearchMode === "cas"
+      ? query.ilike("cas_no", `%${q}%`)
+      : query.ilike("compound_name", `%${q}%`);
+  }
+
+  const { data, error, count } = await query;
+
+  if (requestId !== extSearchRequestId) return;
+
+  if (error) {
+    extResultsList.innerHTML = '<li class="results-empty">검색 중 오류가 발생했습니다.</li>';
+    console.error("External search failed:", error);
+    return;
+  }
+
+  extTotalCount = count || 0;
+  extResultCountEl.textContent = extTotalCount ? `${extTotalCount}건` : "";
+  extResultsList.innerHTML = "";
+
+  if (data.length === 0) {
+    extResultsList.innerHTML = '<li class="results-empty">검색 결과가 없습니다.</li>';
+    return;
+  }
+
+  for (const chem of data) {
+    extResultsList.appendChild(buildExternalCard(chem));
+  }
+
+  renderPaginationInto(extPaginationEl, extCurrentPage, extTotalCount, (page) => {
+    extCurrentPage = page;
+    searchExternalChemicals(false);
+    extResultsList.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
+function buildExternalCard(chem) {
+  const node = extTemplate.content.cloneNode(true);
+  const li = node.querySelector(".ext-card");
+  li.dataset.id = chem.id;
+
+  li.querySelector(".ext-name").textContent = chem.compound_name;
+  li.querySelector(".ext-purity").textContent = formatPurity(chem.purity_conc);
+  li.querySelector(".ext-cas").textContent = chem.cas_no ? `CAS ${chem.cas_no}` : "CAS 없음";
+  li.querySelector(".ext-lab-tag").textContent = LAB_LABELS[chem.lab_code] || chem.lab_name;
+  li.querySelector(".ext-company").textContent = chem.company || "-";
+  li.querySelector(".ext-size").textContent = chem.container_size || "-";
+  li.querySelector(".ext-phase").textContent = chem.phase || "-";
+  li.querySelector(".ext-location").textContent = chem.location || "-";
+
+  const badge = li.querySelector(".ext-available-badge");
+  badge.textContent = chem.is_available ? "사용가능" : "사용불가";
+  badge.classList.toggle("unavailable", !chem.is_available);
+  if (!currentUser) {
+    badge.disabled = true;
+    badge.title = "로그인이 필요합니다";
+  } else {
+    badge.addEventListener("click", () => toggleExternalAvailability(chem));
+  }
+
+  return node;
+}
+
+async function toggleExternalAvailability(chem) {
+  const newValue = !chem.is_available;
+  const { error } = await supabaseClient
+    .from("external_chemicals")
+    .update({ is_available: newValue, updated_at: new Date().toISOString() })
+    .eq("id", chem.id);
+
+  if (error) {
+    alert("변경에 실패했습니다: " + error.message);
+    return;
+  }
+  chem.is_available = newValue;
+  searchExternalChemicals(false);
+}
+
+extSearchBtn.addEventListener("click", () => searchExternalChemicals());
+extSearchInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") searchExternalChemicals();
+});
+
+let extSearchDebounceTimer = null;
+extSearchInput.addEventListener("input", () => {
+  clearTimeout(extSearchDebounceTimer);
+  extSearchDebounceTimer = setTimeout(() => searchExternalChemicals(), 300);
+});
+
+extSearchModeTabs.addEventListener("click", (e) => {
+  const tab = e.target.closest(".search-mode-tab");
+  if (!tab) return;
+  extSearchModeTabs.querySelectorAll(".search-mode-tab").forEach((t) => t.classList.remove("active"));
+  tab.classList.add("active");
+  extSearchMode = tab.dataset.mode;
+  extSearchInput.placeholder = extSearchMode === "cas" ? "예: 64-19-7" : "예: Acetic acid";
+  searchExternalChemicals();
+});
+
+extLabTabs.addEventListener("click", (e) => {
+  const tab = e.target.closest(".shelf-tab");
+  if (!tab) return;
+  extLabTabs.querySelectorAll(".shelf-tab").forEach((t) => t.classList.remove("active"));
+  tab.classList.add("active");
+  extCurrentLab = tab.dataset.lab;
+  searchExternalChemicals();
+});
 
 initAuth();

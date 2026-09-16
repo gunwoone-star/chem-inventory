@@ -27,6 +27,7 @@
             <button class="nav-menu-item active" data-view="search">🔍 검색</button>
             <button class="nav-menu-item" data-view="log">📋 사용기록</button>
             <button class="nav-menu-item" data-view="manual">📖 안전 매뉴얼</button>
+            <button class="nav-menu-item" data-view="external">🧪 2026 타 연구실 시약 검색</button>
           </div>
         </div>
       </div>
@@ -59,6 +60,7 @@
           <button class="shelf-tab" data-category="acids">Acids</button>
           <button class="shelf-tab" data-category="bases">Bases</button>
           <button class="shelf-tab" data-category="deuteriums">Deuteriums</button>
+          <button class="shelf-tab" data-category="special_gas">특수가스</button>
           <button class="shelf-tab" data-category="box1">Box 1</button>
           <button class="shelf-tab" data-category="box2">Box 2</button>
           <button class="shelf-tab" data-category="box3">Box 3</button>
@@ -157,7 +159,63 @@
 
       <p class="manual-disclaimer">이 매뉴얼은 공개된 대학/연구기관 EHS 자료를 요약한 참고용 정보이며, 소속 기관의 공식 안전수칙·환경안전팀 지침을 대체하지 않습니다. This manual summarizes publicly available university/lab EHS materials for reference only, and does not replace your institution's official safety rules.</p>
     </section>
+
+    <section id="view-external" class="view" hidden>
+      <h1>2026 타 연구실 시약 검색</h1>
+      <p class="subtitle">다른 연구실에서 빌릴 때 위치를 확인하는 용도입니다 (검색 전용 — MSDS/취급방법/사용기록 없음)</p>
+
+      <div class="search-mode-tabs" id="ext-search-mode-tabs">
+        <button class="search-mode-tab active" data-mode="name">물질명</button>
+        <button class="search-mode-tab" data-mode="cas">CAS 번호</button>
+      </div>
+
+      <div class="search-bar">
+        <input type="text" id="ext-search-input" placeholder="예: Acetic acid" autocomplete="off">
+        <button id="ext-search-btn" class="btn-primary">검색</button>
+      </div>
+
+      <div class="shelf-tabs" id="ext-lab-tabs">
+        <button class="shelf-tab active" data-lab="">전체 연구실</button>
+        <button class="shelf-tab" data-lab="EL">이은성 교수님</button>
+        <button class="shelf-tab" data-lab="syhong">홍승윤 교수님</button>
+        <button class="shelf-tab" data-lab="CBLee">이철범 교수님</button>
+        <button class="shelf-tab" data-lab="KTKim">김경택 교수님</button>
+        <button class="shelf-tab" data-lab="HGL">이홍근 교수님</button>
+        <button class="shelf-tab" data-lab="SBPark">박승범 교수님</button>
+        <button class="shelf-tab" data-lab="Leelab">이동환 교수님</button>
+      </div>
+
+      <div class="search-actions">
+        <span id="ext-result-count" class="result-count"></span>
+      </div>
+
+      <ul id="ext-results-list" class="ext-results-list">
+        <li class="results-empty">검색어를 입력해 물질을 찾아보세요.</li>
+      </ul>
+      <nav id="ext-pagination" class="pagination" hidden></nav>
+    </section>
   </main>
+
+  <!-- 타 연구실 시약 카드 템플릿 -->
+  <template id="external-chem-template">
+    <li class="ext-card">
+      <div class="ext-card-main">
+        <span class="ext-name"></span>
+        <span class="ext-purity"></span>
+        <button type="button" class="ext-available-badge"></button>
+      </div>
+      <div class="ext-card-meta">
+        <span class="ext-cas"></span>
+        <span class="ext-lab-tag"></span>
+      </div>
+      <div class="ext-card-details">
+        <div><span class="label">회사</span><span class="ext-company"></span></div>
+        <div><span class="label">용량</span><span class="ext-size"></span></div>
+        <div><span class="label">상태</span><span class="ext-phase"></span></div>
+        <div><span class="label">위치</span><span class="ext-location"></span></div>
+      </div>
+    </li>
+  </template>
 
   <!-- 물질 상세 카드 템플릿 -->
   <template id="chemical-card-template">
@@ -306,6 +364,7 @@
               <button type="button" class="shelf-tab" data-category="acids">Acids</button>
               <button type="button" class="shelf-tab" data-category="bases">Bases</button>
               <button type="button" class="shelf-tab" data-category="deuteriums">Deuteriums</button>
+              <button type="button" class="shelf-tab" data-category="special_gas">특수가스</button>
               <button type="button" class="shelf-tab" data-category="box1">Box 1</button>
               <button type="button" class="shelf-tab" data-category="box2">Box 2</button>
               <button type="button" class="shelf-tab" data-category="box3">Box 3</button>
