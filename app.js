@@ -653,7 +653,7 @@ function parseOrderLogRow(line) {
   const cells = line.split("\t").map((c) => c.trim());
   if (cells.length < 8) return null;
 
-  const [company, cas_no, catalogue_no, compound_name, purity_conc, quantityStr, size, form] = cells;
+  const [company, cas_no, catalogue_no, compound_name, purity_conc, quantityStr, size, form, position] = cells;
   if (!compound_name) return null;
 
   return {
@@ -664,7 +664,8 @@ function parseOrderLogRow(line) {
     purity_conc: purity_conc || null,
     quantity_total: parseFloat(quantityStr) || 1,
     container_size: size || null,
-    phase: form || null
+    phase: form || null,
+    storage_position: position || null
   };
 }
 
@@ -689,7 +690,7 @@ addPasteTextarea.addEventListener("input", () => {
 
   if (validRows.length === 0) {
     pastePreview.style.color = "var(--danger)";
-    pastePreview.textContent = "형식을 인식하지 못했습니다. Company~form까지 8개 칸을 탭으로 구분해 붙여넣어주세요.";
+    pastePreview.textContent = "형식을 인식하지 못했습니다. Company~form까지 8개 칸(뒤에 위치 1칸 추가 가능)을 탭으로 구분해 붙여넣어주세요.";
   } else {
     pastePreview.style.color = "var(--success)";
     const names = validRows.map((r) => r.compound_name).join(", ");
