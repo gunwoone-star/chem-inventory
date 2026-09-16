@@ -102,6 +102,69 @@ input, select {
   display: none;
 }
 
+.nav-menu {
+  position: relative;
+}
+
+.hamburger-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.hamburger-btn:hover {
+  border-color: var(--accent);
+}
+
+.nav-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 140px;
+  z-index: 20;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.nav-menu-dropdown[hidden] {
+  display: none;
+}
+
+.nav-menu-item {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  text-align: left;
+  padding: 0.55rem 0.7rem;
+  border-radius: 7px;
+  font-size: 0.88rem;
+}
+
+.nav-menu-item:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.nav-menu-item.active {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.view[hidden] {
+  display: none;
+}
+
 .user-name {
   font-size: 0.9rem;
   color: var(--text-dim);
@@ -496,7 +559,47 @@ input, select {
 }
 
 .modal-wide {
-  max-width: 560px;
+  max-width: 780px;
+}
+
+.add-modal-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.4rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+.add-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.add-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.add-modal-body::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+}
+
+.add-modal-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.form-grid-single {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 700px) {
+  .add-modal-body {
+    grid-template-columns: 1fr;
+    max-height: 55vh;
+  }
 }
 
 .modal h2 {
@@ -598,6 +701,52 @@ input, select {
   justify-content: flex-end;
   gap: 0.6rem;
   margin-top: 0.4rem;
+}
+
+/* ---------- Usage log ---------- */
+
+.log-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 1.5rem;
+}
+
+.log-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.log-item-name {
+  font-weight: 700;
+  flex: 1 1 220px;
+}
+
+.log-item-status {
+  font-size: 0.7rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #fbbf24;
+  color: #fbbf24;
+  flex-shrink: 0;
+}
+
+.log-item-status.returned {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.log-item-detail {
+  color: var(--text-dim);
+  flex-basis: 100%;
 }
 
 /* ---------- Responsive ---------- */

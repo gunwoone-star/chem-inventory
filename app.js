@@ -6,7 +6,12 @@ const CATEGORY_LABELS = {
   inorganics_bulk: "Inorganics (bulk)",
   acids: "Acids",
   bases: "Bases",
-  deuteriums: "Deuteriums"
+  deuteriums: "Deuteriums",
+  box1: "Box 1",
+  box2: "Box 2",
+  box3: "Box 3",
+  box4: "Box 4",
+  box5: "Box 5"
 };
 
 const EDITABLE_FIELDS = {
@@ -622,6 +627,12 @@ searchInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") performSearch();
 });
 
+let searchDebounceTimer = null;
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchDebounceTimer);
+  searchDebounceTimer = setTimeout(performSearch, 300);
+});
+
 shelfTabs.addEventListener("click", (e) => {
   const tab = e.target.closest(".shelf-tab");
   if (!tab) return;
@@ -630,5 +641,112 @@ shelfTabs.addEventListener("click", (e) => {
   currentCategory = tab.dataset.category;
   performSearch();
 });
+
+// ---------- Nav menu / views ----------
+
+const navMenuBtn = document.getElementById("nav-menu-btn");
+const navMenuDropdown = document.getElementById("nav-menu-dropdown");
+const viewSearch = document.getElementById("view-search");
+const viewLog = document.getElementById("view-log");
+
+navMenuBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  navMenuDropdown.hidden = !navMenuDropdown.hidden;
+});
+
+document.addEventListener("click", () => {
+  navMenuDropdown.hidden = true;
+});
+
+navMenuDropdown.addEventListener("click", (e) => {
+  const item = e.target.closest(".nav-menu-item");
+  if (!item) return;
+  const view = item.dataset.view;
+
+  navMenuDropdown.querySelectorAll(".nav-menu-item").forEach((el) => el.classList.remove("active"));
+  item.classList.add("active");
+  navMenuDropdown.hidden = true;
+
+  if (view === "log") {
+    viewSearch.hidden = true;
+    viewLog.hidden = false;
+    loadUsageLog();
+  } else {
+    viewLog.hidden = true;
+    viewSearch.hidden = false;
+  }
+});
+
+// ---------- Usage log view ----------
+
+const logList = document.getElementById("log-list");
+
+async function loadUsageLog() {
+  logList.innerHTML = '<li class="results-loading">불러오는 중...</li>';
+
+  const { data: logs, error } = await supabaseClient
+    .from("usage_logs")
+    .select("*")
+    .order("checked_out_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    logList.innerHTML = '<li class="results-empty">사용기록을 불러오지 못했습니다.</li>';
+    console.error("Failed to load usage log:", error);
+    return;
+  }
+
+  if (logs.length === 0) {
+    logList.innerHTML = '<li class="results-empty">아직 사용기록이 없습니다.</li>';
+    return;
+  }
+
+  const chemIds = [...new Set(logs.map((l) => l.chemical_id))];
+  const userIds = [...new Set(logs.flatMap((l) => [l.checked_out_by, l.returned_by]).filter(Boolean))];
+
+  const [{ data: chems }, { data: profiles }] = await Promise.all([
+    supabaseClient.from("chemicals").select("id, compound_name, category").in("id", chemIds),
+    supabaseClient.from("profiles").select("id, display_name").in("id", userIds)
+  ]);
+
+  const chemById = new Map((chems || []).map((c) => [c.id, c]));
+  const nameByUserId = new Map((profiles || []).map((p) => [p.id, p.display_name]));
+
+  logList.innerHTML = "";
+
+  for (const log of logs) {
+    const chem = chemById.get(log.chemical_id);
+    const chemName = chem ? chem.compound_name : "(삭제된 물질)";
+    const categoryLabel = chem ? (CATEGORY_LABELS[chem.category] || chem.category) : "";
+    const checkedOutByName = nameByUserId.get(log.checked_out_by) || "알 수 없음";
+    const isReturned = !!log.returned_at;
+
+    const li = document.createElement("li");
+    li.className = "log-item";
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "log-item-name";
+    nameSpan.textContent = categoryLabel ? `${chemName} (${categoryLabel})` : chemName;
+
+    const statusSpan = document.createElement("span");
+    statusSpan.className = "log-item-status" + (isReturned ? " returned" : "");
+    statusSpan.textContent = isReturned ? "반납완료" : "사용중";
+
+    const detail = document.createElement("span");
+    detail.className = "log-item-detail";
+    let detailText = `${checkedOutByName} · ${formatDateTime(log.checked_out_at)} 사용 시작`;
+    if (isReturned) {
+      const returnedByName = nameByUserId.get(log.returned_by) || "알 수 없음";
+      detailText += ` → ${returnedByName} · ${formatDateTime(log.returned_at)} 반납`;
+      if (log.amount_used_note) detailText += ` (${log.amount_used_note})`;
+    }
+    detail.textContent = detailText;
+
+    li.appendChild(nameSpan);
+    li.appendChild(statusSpan);
+    li.appendChild(detail);
+    logList.appendChild(li);
+  }
+}
 
 initAuth();
