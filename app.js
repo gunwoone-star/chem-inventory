@@ -15,6 +15,19 @@ const CATEGORY_LABELS = {
   box5: "Box 5"
 };
 
+const CATEGORY_LABEL_TO_CODE = Object.fromEntries(
+  Object.entries(CATEGORY_LABELS).map(([code, label]) => [label.toLowerCase(), code])
+);
+
+function resolveCategoryInput(text) {
+  if (!text) return null;
+  const norm = text.trim().toLowerCase();
+  if (!norm) return null;
+  if (CATEGORY_LABELS[norm]) return norm;
+  if (CATEGORY_LABEL_TO_CODE[norm]) return CATEGORY_LABEL_TO_CODE[norm];
+  return null;
+}
+
 const FIELD_LABELS = {
   disposal_method: "처리 방법",
   storage_method: "보관 방법",
@@ -653,7 +666,7 @@ function parseOrderLogRow(line) {
   const cells = line.split("\t").map((c) => c.trim());
   if (cells.length < 8) return null;
 
-  const [company, cas_no, catalogue_no, compound_name, purity_conc, quantityStr, size, form, position] = cells;
+  const [company, cas_no, catalogue_no, compound_name, purity_conc, quantityStr, size, form, position, categoryText] = cells;
   if (!compound_name) return null;
 
   return {
@@ -665,7 +678,8 @@ function parseOrderLogRow(line) {
     quantity_total: parseFloat(quantityStr) || 1,
     container_size: size || null,
     phase: form || null,
-    storage_position: position || null
+    storage_position: position || null,
+    category: resolveCategoryInput(categoryText)
   };
 }
 
@@ -703,13 +717,7 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   const errorEl = document.getElementById("add-error");
   errorEl.textContent = "";
 
-  const category = selectedAddCategory;
-
-  if (!category) {
-    errorEl.textContent = "보관 장소는 필수입니다.";
-    return;
-  }
-
+  const tabCategory = selectedAddCategory;
   const pasteText = addPasteTextarea.value.trim();
   let payloads;
 
@@ -719,8 +727,20 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
       errorEl.textContent = "붙여넣은 내용에서 물질 정보를 인식하지 못했습니다.";
       return;
     }
-    payloads = rows.map((r) => ({ ...r, category }));
+
+    const missingCategory = rows.filter((r) => !r.category && !tabCategory);
+    if (missingCategory.length > 0) {
+      const names = missingCategory.map((r) => r.compound_name).join(", ");
+      errorEl.textContent = `분류를 확인할 수 없는 항목이 있습니다 (10번째 칸에 분류를 적거나 위 탭을 선택하세요): ${names}`;
+      return;
+    }
+
+    payloads = rows.map((r) => ({ ...r, category: r.category || tabCategory }));
   } else {
+    if (!tabCategory) {
+      errorEl.textContent = "보관 장소는 필수입니다.";
+      return;
+    }
     const compound_name = document.getElementById("add-name").value.trim();
     if (!compound_name) {
       errorEl.textContent = "물질명은 필수입니다 (또는 위에 붙여넣기를 사용하세요).";
@@ -736,7 +756,7 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
       container_type: document.getElementById("add-container").value.trim() || null,
       phase: document.getElementById("add-phase").value.trim() || null,
       quantity_total: parseFloat(document.getElementById("add-quantity").value) || 1,
-      category
+      category: tabCategory
     }];
   }
 
