@@ -236,6 +236,28 @@ input, select {
   margin-bottom: 1.6rem;
 }
 
+.search-mode-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.7rem;
+}
+
+.search-mode-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  padding: 0.4rem 0.2rem;
+  font-size: 0.85rem;
+  margin-right: 1rem;
+}
+
+.search-mode-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
 .search-bar {
   display: flex;
   gap: 0.6rem;

@@ -38,8 +38,13 @@
         <h1>화학물질 재고 검색</h1>
         <p class="subtitle">물질명 또는 CAS 번호로 검색하세요</p>
 
+        <div class="search-mode-tabs" id="search-mode-tabs">
+          <button class="search-mode-tab active" data-mode="name">물질명</button>
+          <button class="search-mode-tab" data-mode="cas">CAS / 제품번호</button>
+        </div>
+
         <div class="search-bar">
-          <input type="text" id="search-input" placeholder="예: Nitromethane 또는 75-52-5" autocomplete="off">
+          <input type="text" id="search-input" placeholder="예: Nitromethane" autocomplete="off">
           <button id="search-btn" class="btn-primary">검색</button>
         </div>
 

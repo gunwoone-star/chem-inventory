@@ -40,6 +40,7 @@ let lastResults = null;
 let isAdmin = false;
 
 const searchInput = document.getElementById("search-input");
+const searchModeTabs = document.getElementById("search-mode-tabs");
 const shelfTabs = document.getElementById("shelf-tabs");
 const searchBtn = document.getElementById("search-btn");
 const resultsList = document.getElementById("results-list");
@@ -47,6 +48,12 @@ const resultCountEl = document.getElementById("result-count");
 const template = document.getElementById("chemical-card-template");
 
 let currentCategory = "";
+let searchMode = "name";
+
+const SEARCH_MODE_PLACEHOLDERS = {
+  name: "예: Nitromethane",
+  cas: "예: 75-52-5 또는 카탈로그 번호"
+};
 
 // ---------- DB connection badge ----------
 
@@ -70,11 +77,14 @@ checkSupabaseConnection();
 // ---------- Search ----------
 
 function sanitizeForFilter(s) {
-  return s.replace(/[(),%]/g, "").trim();
+  return s.replace(/[(),%*]/g, "").trim();
 }
+
+let searchRequestId = 0;
 
 async function performSearch() {
   const rawQuery = searchInput.value.trim();
+  const requestId = ++searchRequestId;
 
   resultsList.innerHTML = '<li class="results-loading">검색 중...</li>';
 
@@ -89,10 +99,17 @@ async function performSearch() {
 
   const q = sanitizeForFilter(rawQuery);
   if (q) {
-    query = query.or(`compound_name.ilike.%${q}%,cas_no.ilike.%${q}%`);
+    if (searchMode === "cas") {
+      query = query.or(`cas_no.ilike.%${q}%,catalogue_no.ilike.%${q}%`);
+    } else {
+      query = query.ilike("compound_name", `%${q}%`);
+    }
   }
 
   const { data, error } = await query;
+
+  // A newer search started while this one was in flight — its result is stale, discard it.
+  if (requestId !== searchRequestId) return;
 
   if (error) {
     resultsList.innerHTML = '<li class="results-empty">검색 중 오류가 발생했습니다.</li>';
@@ -102,6 +119,8 @@ async function performSearch() {
 
   lastResults = data;
   await loadHolderProfiles(data);
+
+  if (requestId !== searchRequestId) return;
   renderResults();
 }
 
@@ -769,6 +788,16 @@ let searchDebounceTimer = null;
 searchInput.addEventListener("input", () => {
   clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(performSearch, 300);
+});
+
+searchModeTabs.addEventListener("click", (e) => {
+  const tab = e.target.closest(".search-mode-tab");
+  if (!tab) return;
+  searchModeTabs.querySelectorAll(".search-mode-tab").forEach((t) => t.classList.remove("active"));
+  tab.classList.add("active");
+  searchMode = tab.dataset.mode;
+  searchInput.placeholder = SEARCH_MODE_PLACEHOLDERS[searchMode];
+  if (searchInput.value.trim()) performSearch();
 });
 
 shelfTabs.addEventListener("click", (e) => {
