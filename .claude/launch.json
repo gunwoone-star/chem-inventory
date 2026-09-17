@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "static-site",
+      "name": "chem-inventory-site",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "5600"],
-      "port": 5600
+      "runtimeArgs": ["-m", "http.server", "5602"],
+      "port": 5602
     }
   ]
 }

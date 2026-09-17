@@ -12,7 +12,8 @@ const CATEGORY_LABELS = {
   box2: "Box 2",
   box3: "Box 3",
   box4: "Box 4",
-  box5: "Box 5"
+  box5: "Box 5",
+  uncategorized: "미분류"
 };
 
 const CATEGORY_LABEL_TO_CODE = Object.fromEntries(
@@ -282,6 +283,7 @@ function buildCard(chem) {
   li.querySelector(".chem-company-inline").textContent = chem.company || "-";
   li.querySelector(".chem-cas").textContent = chem.cas_no ? `CAS ${chem.cas_no}` : "CAS 없음";
   li.querySelector(".chem-category-tag").textContent = CATEGORY_LABELS[chem.category] || chem.category;
+  renderCategoryEdit(li.querySelector(".chem-category-edit"), chem);
   li.querySelector(".chem-company").textContent = chem.company || "-";
   li.querySelector(".chem-size").textContent = chem.container_size || "-";
   li.querySelector(".chem-position").textContent = chem.storage_position || "-";
@@ -418,6 +420,66 @@ function openFieldEditor(container, chem, field) {
 
   container.appendChild(textarea);
   container.appendChild(document.createElement("br"));
+  container.appendChild(saveBtn);
+  container.appendChild(cancelBtn);
+}
+
+function renderCategoryEdit(container, chem) {
+  container.innerHTML = "";
+  if (!currentUser) return;
+
+  const editBtn = document.createElement("button");
+  editBtn.className = "btn-ghost edit-field-btn";
+  editBtn.textContent = "분류 수정";
+  editBtn.addEventListener("click", () => openCategoryEditor(container, chem));
+  container.appendChild(editBtn);
+}
+
+function openCategoryEditor(container, chem) {
+  container.innerHTML = "";
+
+  const select = document.createElement("select");
+  for (const [code, label] of Object.entries(CATEGORY_LABELS)) {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = label;
+    if (code === chem.category) opt.selected = true;
+    select.appendChild(opt);
+  }
+
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "btn-primary";
+  saveBtn.style.marginLeft = "0.4rem";
+  saveBtn.textContent = "저장";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.className = "btn-ghost";
+  cancelBtn.style.marginLeft = "0.3rem";
+  cancelBtn.textContent = "취소";
+
+  saveBtn.addEventListener("click", async () => {
+    const newCategory = select.value;
+    saveBtn.disabled = true;
+    const { error } = await supabaseClient
+      .from("chemicals")
+      .update({ category: newCategory, updated_at: new Date().toISOString() })
+      .eq("id", chem.id);
+
+    if (error) {
+      alert("분류 저장에 실패했습니다: " + error.message);
+      saveBtn.disabled = false;
+      return;
+    }
+
+    chem.category = newCategory;
+    const card = container.closest(".chem-card");
+    card.querySelector(".chem-category-tag").textContent = CATEGORY_LABELS[newCategory] || newCategory;
+    renderCategoryEdit(container, chem);
+  });
+
+  cancelBtn.addEventListener("click", () => renderCategoryEdit(container, chem));
+
+  container.appendChild(select);
   container.appendChild(saveBtn);
   container.appendChild(cancelBtn);
 }
@@ -722,9 +784,16 @@ function parseTsvText(text) {
   return rows.filter((r) => r.some((c) => c.trim() !== ""));
 }
 
-function detectSingleBoxCategory(text) {
+// Best-effort category guess from free-form storage text: an exact code/label
+// match first (e.g. "Organics 1"), then a loose "boxN" substring anywhere in
+// the text (e.g. "Box1, 3, 4" -> box1, "1F Box3 shelf" -> box3). Returns null
+// (never blocks registration) when nothing can be inferred — callers fall
+// back to the "uncategorized" bucket, and the category can be edited later.
+function inferCategoryFromText(text) {
   if (!text) return null;
-  const m = text.trim().match(/^box\s*([1-5])$/i);
+  const direct = resolveCategoryInput(text);
+  if (direct) return direct;
+  const m = text.match(/box\s*([1-5])/i);
   return m ? `box${m[1]}` : null;
 }
 
@@ -745,7 +814,7 @@ function parseOrderLogCells(cells) {
       container_size: size || null,
       phase: form || null,
       storage_position: storage || null,
-      category: detectSingleBoxCategory(storage)
+      category: inferCategoryFromText(storage)
     };
   }
 
@@ -762,7 +831,7 @@ function parseOrderLogCells(cells) {
       container_size: size || null,
       phase: form || null,
       storage_position: position || null,
-      category: resolveCategoryInput(categoryText)
+      category: inferCategoryFromText(categoryText) || inferCategoryFromText(position)
     };
   }
 
@@ -773,8 +842,16 @@ function parsePastedRows(text) {
   return parseTsvText(text).map(parseOrderLogCells);
 }
 
+// Only trailing whitespace is stripped before parsing — trimming the start
+// would eat real leading tab characters when the first pasted row's leading
+// columns (e.g. order-log columns A-E) are blank, shifting every cell over
+// by one and corrupting just that row.
+function trimPasteText(raw) {
+  return raw.trim() ? raw.replace(/\s+$/, "") : "";
+}
+
 addPasteTextarea.addEventListener("input", () => {
-  const text = addPasteTextarea.value.trim();
+  const text = trimPasteText(addPasteTextarea.value);
   if (!text) {
     pastePreview.textContent = "";
     return;
@@ -800,7 +877,7 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
   errorEl.textContent = "";
 
   const tabCategory = selectedAddCategory;
-  const pasteText = addPasteTextarea.value.trim();
+  const pasteText = trimPasteText(addPasteTextarea.value);
   let payloads;
 
   if (pasteText) {
@@ -810,19 +887,8 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
       return;
     }
 
-    const missingCategory = rows.filter((r) => !r.category && !tabCategory);
-    if (missingCategory.length > 0) {
-      const names = missingCategory.map((r) => r.compound_name).join(", ");
-      errorEl.textContent = `분류를 확인할 수 없는 항목이 있습니다 (10번째 칸에 분류를 적거나 위 탭을 선택하세요): ${names}`;
-      return;
-    }
-
-    payloads = rows.map((r) => ({ ...r, category: r.category || tabCategory }));
+    payloads = rows.map((r) => ({ ...r, category: r.category || tabCategory || "uncategorized" }));
   } else {
-    if (!tabCategory) {
-      errorEl.textContent = "보관 장소는 필수입니다.";
-      return;
-    }
     const compound_name = document.getElementById("add-name").value.trim();
     if (!compound_name) {
       errorEl.textContent = "물질명은 필수입니다 (또는 위에 붙여넣기를 사용하세요).";
@@ -838,7 +904,7 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
       container_type: document.getElementById("add-container").value.trim() || null,
       phase: document.getElementById("add-phase").value.trim() || null,
       quantity_total: parseFloat(document.getElementById("add-quantity").value) || 1,
-      category: tabCategory
+      category: tabCategory || "uncategorized"
     }];
   }
 
@@ -872,8 +938,8 @@ document.getElementById("add-form").addEventListener("submit", async (e) => {
     await performSearch();
   } else {
     searchInput.value = "";
-    currentCategory = category;
-    shelfTabs.querySelectorAll(".shelf-tab").forEach((t) => t.classList.toggle("active", t.dataset.category === category));
+    currentCategory = "";
+    shelfTabs.querySelectorAll(".shelf-tab").forEach((t) => t.classList.toggle("active", t.dataset.category === ""));
     await performSearch();
   }
 });

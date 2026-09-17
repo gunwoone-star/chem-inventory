@@ -66,6 +66,7 @@
           <button class="shelf-tab" data-category="box3">Box 3</button>
           <button class="shelf-tab" data-category="box4">Box 4</button>
           <button class="shelf-tab" data-category="box5">Box 5</button>
+          <button class="shelf-tab" data-category="uncategorized">미분류</button>
         </div>
 
         <div class="search-actions">
@@ -240,6 +241,7 @@
           <div class="chem-meta">
             <span class="chem-cas"></span>
             <span class="chem-category-tag"></span>
+            <span class="chem-category-edit"></span>
           </div>
 
           <div class="chem-summary">
@@ -351,7 +353,7 @@
           <div class="add-modal-col">
             <div class="paste-box">
               <label class="field-label" for="add-paste">
-                구매장부에서 행 전체를 그대로 복사해서 붙여넣으세요 (이름/주문일/수령일/보관위치/회사/CAS/제품번호/시약명/순도/수량/규격/분자식/상태 전체). 보관위치 칸이 "Box1"처럼 박스 하나만 명확히 적혀있으면 분류도 자동으로 인식됩니다 — 아니면 아래 탭에서 분류를 선택해주세요. 여러 줄 붙여넣으면 한번에 여러 개 등록됩니다.
+                구매장부에서 행 전체를 그대로 복사해서 붙여넣으세요 (이름/주문일/수령일/보관위치/회사/CAS/제품번호/시약명/순도/수량/규격/분자식/상태 전체). 보관위치 칸에서 분류를 자동으로 읽어옵니다 — 탭을 따로 선택하지 않아도 되고, 인식이 안 되면 일단 "미분류"로 등록되며 나중에 카드에서 분류를 수정할 수 있습니다. 여러 줄 붙여넣으면 한번에 여러 개 등록됩니다.
                 <br>간단하게 입력할 때는 Company / CAS No. / Catalogue No. / compound name / purity·conc. / quantity(ea) / size / form 8칸(+ 위치, + 분류 선택사항)도 가능합니다.
               </label>
               <textarea id="add-paste" rows="6" placeholder="여기에 붙여넣기 (Ctrl+V)"></textarea>
@@ -360,7 +362,7 @@
           </div>
 
           <div class="add-modal-col">
-            <p class="field-label">보관 장소 선택 (붙여넣기 10번째 칸에 분류를 적었으면 생략 가능)</p>
+            <p class="field-label">보관 장소 선택 (선택사항 — 붙여넣은 줄글에서 자동 인식되며, 나중에도 수정 가능합니다)</p>
             <div class="shelf-tabs" id="add-category-tabs">
               <button type="button" class="shelf-tab" data-category="organics1">Organics 1</button>
               <button type="button" class="shelf-tab" data-category="organics2">Organics 2</button>
