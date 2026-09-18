@@ -1,0 +1,16 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          curl -sf "https://mwfcuvisqeowplcymrtf.supabase.co/rest/v1/chemicals?select=id&limit=1" \
+            -H "apikey: sb_publishable_AUR_OglrYaL4gbauJbzOEQ_vrqQT_si" \
+            -H "Authorization: Bearer sb_publishable_AUR_OglrYaL4gbauJbzOEQ_vrqQT_si"
